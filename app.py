@@ -86,11 +86,21 @@ if st.session_state['data_loaded']:
 from stemgraphic import stem_graphic
 # 3. 데이터 시각화
 if st.session_state['selected_columns']:
-    st.subheader("📈 데이터 하나씩 시각화")
+    st.subheader("📈 한 변량 데이터 시각화")
     st.success("위에서 나타낸 패턴을 바탕으로, 한 열만을 골라 다양하게 시각화해보면서 추가적으로 탐색해봅시다. ")
     df1 = df[st.session_state['selected_columns']]
-    graph_type = st.radio("그래프 종류를 선택해주세요. ", ["막대그래프", "원그래프", "띠그래프", "꺾은선그래프", "줄기와잎그림", "히스토그램"])
+    graph_type = st.radio("그래프 종류를 선택해주세요. ", ["막대그래프", "원그래프", "띠그래프", "꺾은선그래프", "줄기와잎그림", "히스토그램", "상자그림"])
     w, h = st.columns(2)
+    st.write(df1.dtypes)
+
+    if graph_type =="히스토그램":
+        if pd.api.types.is_float_dtype(df1):
+            wid = (df1.max()-df1.min())/10
+        else:
+            wid = 100
+        binwidth = st.number_input("계급의 크기를 입력해주세요.", value = wid)
+    else:
+        binwidth = None
     # with w:
     #     width = st.number_input("그래프 그림의 가로 길이", value = 12)
     # with h:
@@ -99,7 +109,7 @@ if st.session_state['selected_columns']:
     # eda.하나씩_그래프_그리기(pd.DataFrame(df1), width, height)
 
     st.write(graph_type+"를 그린 결과입니다. 저장하려면 버튼을 클릭하세요.")
-    fig = eda.선택해서_그래프_그리기(pd.DataFrame(df1), graph_type)
+    fig = eda.선택해서_그래프_그리기(pd.DataFrame(df1), graph_type, binwidth)
 
     # 그림으로 저장
     st.session_state['graph_type'] = graph_type
@@ -109,7 +119,7 @@ if st.session_state['selected_columns']:
 
     with open("fig.png", "rb") as file:
         btn = st.download_button(
-                label="Download image",
+                label="그래프 다운로드 받기",
                 data=file,
                 file_name=f"{selected_columns}_{graph_type}.png",
                 mime="image/png")
@@ -118,4 +128,3 @@ if st.session_state['selected_columns']:
     # 히스토그램/줄기 잎 그림 구간 조정하기 추가
     # 띠그래프 비율 표시 추가
     # 평균 추가할지?
-    # 그래프 아래에 누적으로 저장하기 기능 추가

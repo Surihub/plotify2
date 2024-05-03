@@ -291,7 +291,7 @@ def 하나씩_그래프_그리기(df, width, height):
         st.pyplot(fig)
 
 @st.cache_data
-def 선택해서_그래프_그리기(df, graph_type):
+def 선택해서_그래프_그리기(df, graph_type, binwidth = None):
     col = df.columns[0]
     fig, ax = plt.subplots()
     
@@ -317,7 +317,7 @@ def 선택해서_그래프_그리기(df, graph_type):
 
         # 범례 설정
         handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles, [label.split(', ')[-1][:-1] for label in labels], loc='lower center', bbox_to_anchor=(0.5, 0), ncol=len(labels), frameon=False)
+        ax.legend(handles, [label.split(', ')[-1][:] for label in labels], loc='lower center', bbox_to_anchor=(0.5, 0), ncol=len(labels), frameon=False)
 
         # x축 레이블을 퍼센트로 표시
         ax.set_xlabel('(%)')
@@ -330,10 +330,30 @@ def 선택해서_그래프_그리기(df, graph_type):
         ax.set_title(f'{col} ribbon graph')
 
         plt.tight_layout()
+    elif graph_type == '꺾은선그래프':
+        # 이변량에서....
+        temp = df[col].value_counts()
+        plt.plot(temp.sort_index().index, temp.sort_index().values, marker='o', linestyle='-', color='black')
+        if binwidth == None:
+            plt.ylim(0, temp.sort_index().max() * 1.2)
+        else:
+            plt.ylim(temp.sort_index().min * 0.8, temp.sort_index().max() * 1.2)  
     elif graph_type == '히스토그램':
-        sns.histplot(data = df, x = col, ax = ax, color=pal[0])
+        sns.histplot(data = df, x = col, ax = ax, color=pal[0], binwidth = binwidth)    
     elif graph_type == '줄기와잎그림':
-        stem_graphic(df[col], ax = ax)
+        try:
+            # 숫자형 데이터가 아닐 경우 오류가 발생할 수 있음
+            stem_graphic(df[col], ax=ax)
+        except TypeError:
+            print(f"오류: '{col}' 열은 숫자형 데이터가 아니어서 줄기와 잎 그림을 그릴 수 없습니다.")
+        except Exception as e:
+            print(f"알 수 없는 오류가 발생했습니다: {e}")
+    elif graph_type == '상자그림':
+        sns.boxplot(data = df, x = col, color=pal[0], showmeans=True,
+                    meanprops={'marker':'o',
+                       'markerfacecolor':'white', 
+                       'markeredgecolor':'black',
+                       'markersize':'8'})
     else:
         st.error("Unsupported graph type.")
         return None
