@@ -89,7 +89,7 @@ if st.session_state['selected_columns']:
     st.subheader("📈 데이터 하나씩 시각화")
     st.success("위에서 나타낸 패턴을 바탕으로, 한 열만을 골라 다양하게 시각화해보면서 추가적으로 탐색해봅시다. ")
     df1 = df[st.session_state['selected_columns']]
-    graph_type = st.radio("그래프 종류를 선택해주세요. ", ["bar", "pie", "ribbon", "line", "stem", "hist"])
+    graph_type = st.radio("그래프 종류를 선택해주세요. ", ["막대그래프", "원그래프", "띠그래프", "꺾은선그래프", "줄기와잎그림", "히스토그램"])
     w, h = st.columns(2)
     # with w:
     #     width = st.number_input("그래프 그림의 가로 길이", value = 12)
@@ -99,9 +99,20 @@ if st.session_state['selected_columns']:
     # eda.하나씩_그래프_그리기(pd.DataFrame(df1), width, height)
 
     st.write(graph_type+"를 그린 결과입니다. 저장하려면 버튼을 클릭하세요.")
-    eda.선택해서_그래프_그리기(pd.DataFrame(df1), graph_type)
-    st.button("이 그래프 저장하기")
+    fig = eda.선택해서_그래프_그리기(pd.DataFrame(df1), graph_type)
 
+    # 그림으로 저장
+    st.session_state['graph_type'] = graph_type
+    st.session_state['fig'] = fig
+    fig_path = "fig.png"
+    st.session_state.fig.savefig(fig_path)
+
+    with open("fig.png", "rb") as file:
+        btn = st.download_button(
+                label="Download image",
+                data=file,
+                file_name=f"{selected_columns}_{graph_type}.png",
+                mime="image/png")
     st.session_state['viz'] = True
 
     # 히스토그램/줄기 잎 그림 구간 조정하기 추가
