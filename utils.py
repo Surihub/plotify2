@@ -360,3 +360,38 @@ def 선택해서_그래프_그리기(df, graph_type, binwidth = None):
     
     st.pyplot(fig)
     return fig
+
+
+
+@st.cache_data
+def 선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type, binwidth = None):
+    col = df.columns[0]
+    fig, ax = plt.subplots()
+    
+    if graph_type == '막대그래프':
+        sns.countplot(x=df.columns[0], data=df, ax=ax, palette=pal)
+    elif graph_type == '꺾은선그래프':
+        # 이변량에서....
+        temp = df[col].value_counts()
+        plt.plot(temp.sort_index().index, temp.sort_index().values, marker='o', linestyle='-', color='black')
+        if binwidth == None:
+            plt.ylim(0, temp.sort_index().max() * 1.2)
+        else:
+            plt.ylim(temp.sort_index().min * 0.8, temp.sort_index().max() * 1.2)  
+    elif graph_type == '히스토그램':
+        sns.histplot(data = df, x = col, ax = ax, color=pal[0], binwidth = binwidth)    
+    elif graph_type == '상자그림':
+        sns.boxplot(data = df, x = col, color=pal[0], showmeans=True,
+                    meanprops={'marker':'o',
+                       'markerfacecolor':'white', 
+                       'markeredgecolor':'black',
+                       'markersize':'8'})
+    elif graph_type =="산점도":
+        st.write("산점도")
+    else:
+        st.error("Unsupported graph type.")
+        return None
+    
+    st.pyplot(fig)
+    return fig
+

@@ -40,14 +40,6 @@ with st.sidebar:
     if st.checkbox(f'**{mydata}** 불러오기'):
         # df = sns.load_dataset(dataset_name)
         df = eda.load_data(dataset_name, uploaded_file)
-        # df = st.session_state['df']
-    # # 버튼을 통해 캐시 클리어
-    # if st.button('새로운 데이터를 탐색하려면 버튼을 눌러주세요. '):
-    #     st.cache_data.clear()  # 모든 memo 캐시 클리어
-    #     st.cache_resource.clear()  # 모든 singleton 캐시 클리어
-    #     st.write("모든 데이터가 삭제되었습니다.")
-    #     st.session_state['data_loaded'] = None
-    #     st.session_state['df'] = None
        
 st.subheader("👀 데이터 확인하기")
 # st.write(df)
@@ -67,64 +59,86 @@ if st.session_state['data_loaded']:
     df = st.session_state['df']
     st.subheader("👈 분석할 열 선택하기")
     st.success(f"이 데이터는 {df.shape[0]}개의 행(가로줄), {df.shape[1]}개의 열(세로줄)로 이뤄진 데이터네요! 그럼, 위의 데이터셋에서, 분석할 열만 선택해주세요.")
-    if st.checkbox('모든 열 선택하기', key='select_all', value = df.columns.all()):
-        default_columns = df.columns.tolist() if 'select_all' in st.session_state and st.session_state['select_all'] else []
-    else:
-        default_columns = df.columns.tolist() if 'selected_columns' not in st.session_state else st.session_state['selected_columns']
 
-    colu1, colu2 = st.columns(2)
-    with colu1:
-        selected_columns = st.radio('분석하고자 하는 열을 선택하세요:', st.session_state['df'].columns.tolist())
-    with colu2:
-        st.write(df[selected_columns])
-
-    st.session_state['selected_columns'] = selected_columns
-    if st.button('열 선택 완료!'):
-        st.session_state['columns_selected'] = True
-        st.success("열 선택 완료!")
 
 from stemgraphic import stem_graphic
 # 3. 데이터 시각화
-if st.session_state['selected_columns']:
-    st.subheader("📈 한 변량 데이터 시각화")
-    st.success("위에서 나타낸 패턴을 바탕으로, 한 열만을 골라 다양하게 시각화해보면서 추가적으로 탐색해봅시다. ")
-    df1 = df[st.session_state['selected_columns']]
-    graph_type = st.radio("그래프 종류를 선택해주세요. ", ["막대그래프", "원그래프", "띠그래프", "꺾은선그래프", "줄기와잎그림", "히스토그램", "상자그림"])
-    w, h = st.columns(2)
-    st.write(df1.dtypes)
+if st.session_state['data_loaded']:
+    tab1, tab2 = st.tabs(["한 개의 시각화", "두 개의 변량 시각화"])
 
-    if graph_type =="히스토그램":
-        if pd.api.types.is_float_dtype(df1):
-            wid = (df1.max()-df1.min())/10
+    with tab1:
+        st.subheader("📈 한 변량 데이터 시각화")
+        st.success("위에서 나타낸 패턴을 바탕으로, 한 열만을 골라 다양하게 시각화해보면서 추가적으로 탐색해봅시다. ")
+        colu1, colu2 = st.columns(2)
+        with colu1:
+            selected_columns = st.radio('분석하고자 하는 열을 선택하세요:', st.session_state['df'].columns.tolist())
+        with colu2:
+            graph_type = st.radio("그래프 종류를 선택해주세요. ", ["막대그래프", "원그래프", "띠그래프", "꺾은선그래프", "줄기와잎그림", "히스토그램", "상자그림"])
+        
+
+        st.session_state['selected_columns'] = selected_columns
+        if st.button('열 선택 완료!'):
+            st.session_state['columns_selected'] = True
+            st.success("열 선택 완료!")
+            
+        df1 = df[st.session_state['selected_columns']]
+
+        if graph_type =="히스토그램":
+            if pd.api.types.is_float_dtype(df1):
+                wid = (df1.max()-df1.min())/10
+            else:
+                wid = 100
+            binwidth = st.number_input("계급의 크기를 입력해주세요.", value = wid)
         else:
-            wid = 100
-        binwidth = st.number_input("계급의 크기를 입력해주세요.", value = wid)
-    else:
-        binwidth = None
-    # with w:
-    #     width = st.number_input("그래프 그림의 가로 길이", value = 12)
-    # with h:
-    #     height = st.number_input("그래프 그림의 세로 길이", value = 4)
-    st.session_state['df1'] = df1
-    # eda.하나씩_그래프_그리기(pd.DataFrame(df1), width, height)
+            binwidth = None
+        st.session_state['df1'] = df1
 
-    st.write(graph_type+"를 그린 결과입니다. 저장하려면 버튼을 클릭하세요.")
-    fig = eda.선택해서_그래프_그리기(pd.DataFrame(df1), graph_type, binwidth)
+        st.write(graph_type+"를 그린 결과입니다. 저장하려면 버튼을 클릭하세요.")
+        fig = eda.선택해서_그래프_그리기(pd.DataFrame(df1), graph_type, binwidth)
 
-    # 그림으로 저장
-    st.session_state['graph_type'] = graph_type
-    st.session_state['fig'] = fig
-    fig_path = "fig.png"
-    st.session_state.fig.savefig(fig_path)
+        # 그림으로 저장
+        st.session_state['graph_type'] = graph_type
+        st.session_state['fig'] = fig
+        fig_path = "fig.png"
+        st.session_state.fig.savefig(fig_path)
 
-    with open("fig.png", "rb") as file:
-        btn = st.download_button(
-                label="그래프 다운로드 받기",
-                data=file,
-                file_name=f"{selected_columns}_{graph_type}.png",
-                mime="image/png")
-    st.session_state['viz'] = True
+        with open("fig.png", "rb") as file:
+            btn = st.download_button(
+                    label="그래프 다운로드 받기[일변량]",
+                    data=file,
+                    file_name=f"{selected_columns}_{graph_type}.png",
+                    mime="image/png")
+        st.session_state['viz'] = True
+        # 띠그래프 비율 표시 추가
+        # 평균 추가할지?
 
-    # 히스토그램/줄기 잎 그림 구간 조정하기 추가
-    # 띠그래프 비율 표시 추가
-    # 평균 추가할지?
+    with tab2:
+        st.subheader("📈 두 개의 변량 데이터 시각화")
+        st.success("위에서 나타낸 패턴을 바탕으로, 가로축, 세로축을 선택하여 다양하게 시각화해보면서 추가적으로 탐색해봅시다. ")
+        x_var_col, y_var_col = st.columns(2)
+        with x_var_col:
+            x_var = st.radio('가로축 변수를 선택하세요:', st.session_state['df'].columns.tolist())
+        with y_var_col:
+            y_var = st.radio('세로축 변수를 선택하세요:', st.session_state['df'].columns.tolist())
+        if x_var==y_var:
+            st.error("서로 다른 변수를 선택해주세요.")
+        else:
+            graph_type_2 = st.radio("이변량그래프 종류를 선택해주세요.", ["막대그래프", "꺾은선그래프", "히스토그램", "상자그림", "산점도"])
+
+            st.write(graph_type_2+"를 그린 결과입니다. 저장하려면 버튼을 클릭하세요.")
+            fig = eda.선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type_2, binwidth)
+
+            # 그림으로 저장
+            st.session_state['graph_type_2'] = graph_type_2
+            st.session_state['fig'] = fig
+            fig_path = "fig.png"
+            st.session_state.fig.savefig(fig_path)
+
+            with open("fig.png", "rb") as file:
+                btn = st.download_button(
+                        label="그래프 다운로드 받기[이변량]",
+                        data=file,
+                        file_name=f"{selected_columns}_{graph_type_2}.png",
+                        mime="image/png")
+            st.session_state['viz'] = True
+
