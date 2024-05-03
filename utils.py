@@ -295,11 +295,11 @@ def 선택해서_그래프_그리기(df, graph_type):
     col = df.columns[0]
     fig, ax = plt.subplots()
     
-    if graph_type == 'bar':
+    if graph_type == '막대그래프':
         sns.countplot(x=df.columns[0], data=df, ax=ax, palette=pal)
-    elif graph_type == 'pie':
+    elif graph_type == '원그래프':
         ax.pie(df[col].value_counts(), labels=df[col].value_counts().index, autopct='%1.1f%%', startangle=90,  colors=pal)
-    elif graph_type == 'ribbon':
+    elif graph_type == '띠그래프':
         # 띠 그래프
         # 데이터프레임에서 특정 열에 대한 값의 비율을 계산합니다.
         ddi = df.copy()
@@ -330,12 +330,13 @@ def 선택해서_그래프_그리기(df, graph_type):
         ax.set_title(f'{col} ribbon graph')
 
         plt.tight_layout()
-    elif graph_type == 'hist':
+    elif graph_type == '히스토그램':
         sns.histplot(data = df, x = col, ax = ax, color=pal[0])
-    elif graph_type == 'stem':
+    elif graph_type == '줄기와잎그림':
         stem_graphic(df[col], ax = ax)
     else:
         st.error("Unsupported graph type.")
         return None
     
     st.pyplot(fig)
+    return fig
