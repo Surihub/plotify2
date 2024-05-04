@@ -123,7 +123,8 @@ if st.session_state.get('show_visualization', False):
         st.session_state['df1'] = df1
 
         st.success(graph_type+"를 그린 결과입니다. 저장하려면 버튼을 클릭하세요.")
-        fig = eda.선택해서_그래프_그리기(pd.DataFrame(df1), graph_type, binwidth)
+        rot_angle = st.number_input("가로축 글씨 회전시키기. ", min_value = 0, max_value = 90, step = 45)
+        fig = eda.선택해서_그래프_그리기(pd.DataFrame(df1), graph_type, binwidth, rot_angle = rot_angle)
 
         # 그림으로 저장
         st.session_state['graph_type'] = graph_type
@@ -192,8 +193,7 @@ if st.session_state.get('show_visualization', False):
                 else:
                     option = None
 
-                # rot_angle = st.number_input("가로축 글씨 회전시키기", min_value = 0, max_value = 90, step = 15)
-                rot_angle = 0
+                rot_angle = st.number_input("가로축 글씨 회전시키기", min_value = 0, max_value = 90, step = 45)
                 fig = eda.선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type_2, option=option, rot_angle = rot_angle)
 
                 # 그림으로 저장
@@ -209,7 +209,7 @@ if st.session_state.get('show_visualization', False):
                             file_name=f"{selected_columns}_{graph_type_2}.png",
                             mime="image/png")
                 st.session_state['viz'] = True
-            plt.xticks(rotation = rot_angle)
+
         # except Exception as e:
         #     translator = deepl.Translator(st.secrets['deepl']['key'])
         #     error_message = translator.translate_text(f"{e}", target_lang="KO")

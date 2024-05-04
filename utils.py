@@ -291,7 +291,7 @@ def 하나씩_그래프_그리기(df, width, height):
         st.pyplot(fig)
 
 @st.cache_data
-def 선택해서_그래프_그리기(df, graph_type, binwidth = None):
+def 선택해서_그래프_그리기(df, graph_type, binwidth = None, rot_angle = 0):
     col = df.columns[0]
     fig, ax = plt.subplots()
     
@@ -357,7 +357,7 @@ def 선택해서_그래프_그리기(df, graph_type, binwidth = None):
     else:
         st.error("지원되지 않는 그래프입니다. ")
         return None
-    
+    plt.xticks(rotation = rot_angle)
     st.pyplot(fig)
     return fig
 
@@ -405,7 +405,7 @@ def 선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type, opt
     # ax.legend( loc='upper center',  ncol=1, frameon=True)
 
     # xticks option
-    plt.xticks(rotation = 0)
+    plt.xticks(rotation = rot_angle)
     st.pyplot(fig)
     return fig
 
