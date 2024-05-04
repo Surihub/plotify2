@@ -6,6 +6,8 @@ import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import koreanize_matplotlib
+import deepl
+
 
 st.header("🌲Wep app for EDA")
 st.success("🎈EDA(Exploratory Data Analysis, 탐색적 데이터 분석)이란 간단한 그래프로 데이터의 특징과 패턴을 찾아내어 데이터를 탐구하기 위한 과정입니다. 왼쪽의 사이드바에서 데이터를 선택하거나 업로드하고, 순서에 따라 탐색을 진행해보세요. **단, 입력하는 데이터는 원자료(raw data)의 형태**여야 합니다. \n\n✉ 버그 및 제안사항 등 문의: sbhath17@gmail.com(황수빈), code: [github](https://github.com/Surihub/plot)")
@@ -40,6 +42,8 @@ with st.sidebar:
     if st.checkbox(f'**{mydata}** 불러오기'):
         # df = sns.load_dataset(dataset_name)
         df = eda.load_data(dataset_name, uploaded_file)
+        if st.checkbox(f'**{mydata}** 조금만 불러오기'):
+            df = df.sample(n=30, random_state=42)
        
 st.subheader("👀 데이터 확인하기")
 # st.write(df)
@@ -49,17 +53,17 @@ try:
         st.session_state['data_loaded'] = True
         st.write("데이터 로드 완료! 불러온 데이터셋은 다음과 같습니다. ")
         st.write(df.head())
-        with st.expander('전체 데이터 보기'):
-            st.write(df)
+        
 except:
     st.error("사이드바에서 먼저 데이터를 선택 후 <데이터 불러오기> 버튼을 클릭해주세요. ")
 # st.write(st.session_state['data_loaded'])
 # 2. 열 선택
 if st.session_state['data_loaded']:
     df = st.session_state['df']
-    st.subheader("👈 분석할 열 선택하기")
-    st.success(f"이 데이터는 {df.shape[0]}개의 행(가로줄), {df.shape[1]}개의 열(세로줄)로 이뤄진 데이터네요! 그럼, 위의 데이터셋에서, 분석할 열만 선택해주세요.")
-
+    # st.subheader("👈 분석할 열 선택하기")
+    st.success(f"이 데이터는 {df.shape[0]}개의 행(가로줄), {df.shape[1]}개의 열(세로줄)로 이뤄진 데이터네요! ")
+    with st.expander('전체 데이터 보기'):
+        st.write(df)
 
 from stemgraphic import stem_graphic
 # 3. 데이터 시각화
@@ -88,12 +92,12 @@ if st.session_state['data_loaded']:
                 wid = (df1.max()-df1.min())/10
             else:
                 wid = 100
-            binwidth = st.number_input("계급의 크기를 입력해주세요.", value = wid)
+            binwidth = st.number_input("변량의 계급의 크기를 입력해주세요.", value = wid)
         else:
             binwidth = None
         st.session_state['df1'] = df1
 
-        st.write(graph_type+"를 그린 결과입니다. 저장하려면 버튼을 클릭하세요.")
+        st.success(graph_type+"를 그린 결과입니다. 저장하려면 버튼을 클릭하세요.")
         fig = eda.선택해서_그래프_그리기(pd.DataFrame(df1), graph_type, binwidth)
 
         # 그림으로 저장
@@ -115,30 +119,73 @@ if st.session_state['data_loaded']:
     with tab2:
         st.subheader("📈 두 개의 변량 데이터 시각화")
         st.success("위에서 나타낸 패턴을 바탕으로, 가로축, 세로축을 선택하여 다양하게 시각화해보면서 추가적으로 탐색해봅시다. ")
-        x_var_col, y_var_col = st.columns(2)
+        # try: # 맨 나중에 처리
+        x_var_col, y_var_col, select_graph = st.columns(3)
         with x_var_col:
             x_var = st.radio('가로축 변수를 선택하세요:', st.session_state['df'].columns.tolist())
         with y_var_col:
-            y_var = st.radio('세로축 변수를 선택하세요:', st.session_state['df'].columns.tolist())
-        if x_var==y_var:
+            y_var = st.radio('세로축 변수를 선택하세요(그룹):', st.session_state['df'].columns.tolist())
+        if x_var and y_var and x_var == y_var:
             st.error("서로 다른 변수를 선택해주세요.")
-        else:
-            graph_type_2 = st.radio("이변량그래프 종류를 선택해주세요.", ["막대그래프", "꺾은선그래프", "히스토그램", "상자그림", "산점도"])
+        elif x_var and y_var:
+            df = st.session_state['df']
+            with select_graph:
+                graph_type_2 = st.radio("이변량그래프 종류를 선택해주세요.", ["막대그래프", "꺾은선그래프", "히스토그램", "도수분포다각형", "상자그림", "산점도"])
 
-            st.write(graph_type_2+"를 그린 결과입니다. 저장하려면 버튼을 클릭하세요.")
-            fig = eda.선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type_2, binwidth)
+            if graph_type_2 != None:
+                st.success(graph_type_2+"를 그린 결과입니다. 저장하려면 버튼을 클릭하세요.")
+                if graph_type_2 == "산점도":
+                    scatter_group, scatter_option = st.columns(2)
+                    with scatter_group:
+                        scatter_group_button = st.checkbox("그룹으로 묶기")
+                    with scatter_option:
+                        # hue 구분 옵션
+                        if scatter_group_button:
+                            option = st.selectbox("구분할 옵션을 선택해주세요.",df.columns.tolist())
+                        else:
+                            option = None
+                elif graph_type_2 =="꺾은선그래프":
+                    # 세로축 범위 옵션
+                    if st.checkbox("0부터 표시합니다."):
+                        option = None
+                    else:
+                        option = True
 
-            # 그림으로 저장
-            st.session_state['graph_type_2'] = graph_type_2
-            st.session_state['fig'] = fig
-            fig_path = "fig.png"
-            st.session_state.fig.savefig(fig_path)
+                elif graph_type_2 =="히스토그램":
+                    if pd.api.types.is_float_dtype(df[x_var]):
+                        wid = (df[x_var].max()-df[x_var].min())/10
+                    else:
+                        wid = 100
+                    option = st.number_input("공통된 계급의 크기를 입력해주세요.", value = wid)
 
-            with open("fig.png", "rb") as file:
-                btn = st.download_button(
-                        label="그래프 다운로드 받기[이변량]",
-                        data=file,
-                        file_name=f"{selected_columns}_{graph_type_2}.png",
-                        mime="image/png")
-            st.session_state['viz'] = True
+                elif graph_type_2 =="도수분포다각형":
+                    if pd.api.types.is_float_dtype(df[x_var]):
+                        wid = (df[x_var].max()-df[x_var].min())/10
+                    else:
+                        wid = 100
+                    option = st.number_input("공통된 계급의 크기를 입력해주세요.", value = wid)
+                else:
+                    option = None
 
+                # rot_angle = st.number_input("가로축 글씨 회전시키기", min_value = 0, max_value = 90, step = 15)
+                rot_angle = 0
+                fig = eda.선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type_2, option=option, rot_angle = rot_angle)
+
+                # 그림으로 저장
+                st.session_state['graph_type_2'] = graph_type_2
+                st.session_state['fig'] = fig
+                fig_path = "fig.png"
+                st.session_state.fig.savefig(fig_path)
+
+                with open("fig.png", "rb") as file:
+                    btn = st.download_button(
+                            label="그래프 다운로드 받기[이변량]",
+                            data=file,
+                            file_name=f"{selected_columns}_{graph_type_2}.png",
+                            mime="image/png")
+                st.session_state['viz'] = True
+            plt.xticks(rotation = rot_angle)
+        # except Exception as e:
+        #     translator = deepl.Translator(st.secrets['deepl']['key'])
+        #     error_message = translator.translate_text(f"{e}", target_lang="KO")
+        #     st.error(f"그래프를 그릴 수 없습니다.  \n오류메시지{e}\n\n오류메시지(kor){error_message}")

@@ -306,18 +306,18 @@ def 선택해서_그래프_그리기(df, graph_type, binwidth = None):
         ddi = ddi.dropna()
         ddi = pd.DataFrame(ddi[col])
         ddi['temp'] = '_'
-        
-        ddi_2 = pd.pivot_table(ddi, columns = col, aggfunc= 'count')
+
+        ddi_2 = pd.pivot_table(ddi, columns=col, aggfunc='count')
 
         # 각 값이 전체 합계에 대한 비율이 되도록 변환합니다.
-        ddi_percent = ddi_2.divide(ddi_2.sum(axis=1), axis=0)
+        ddi_percent = ddi_2.divide(ddi_2.sum(axis=1), axis=0)*100
 
         # 막대 그래프를 가로로 그리고, 누적해서 표시합니다.
-        ddi_percent.plot(kind='barh', stacked=True, ax=ax, legend=False, color = pal)
+        ddi_percent.plot(kind='barh', stacked=True, ax=ax, legend=False, color=pal)
 
-        # 범례 설정
+        # 범례 설정 - 세로로 배치
         handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles, [label.split(', ')[-1][:] for label in labels], loc='lower center', bbox_to_anchor=(0.5, 0), ncol=len(labels), frameon=False)
+        ax.legend(handles, [label.split(', ')[-1][:] for label in labels], loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=1, frameon=True)
 
         # x축 레이블을 퍼센트로 표시
         ax.set_xlabel('(%)')
@@ -327,7 +327,7 @@ def 선택해서_그래프_그리기(df, graph_type, binwidth = None):
         ax.yaxis.set_ticklabels([])
 
         # 그래프 제목 설정
-        ax.set_title(f'{col} ribbon graph')
+        ax.set_title(f'{col} 띠그래프')
 
         plt.tight_layout()
     elif graph_type == '꺾은선그래프':
@@ -355,7 +355,7 @@ def 선택해서_그래프_그리기(df, graph_type, binwidth = None):
                        'markeredgecolor':'black',
                        'markersize':'8'})
     else:
-        st.error("Unsupported graph type.")
+        st.error("지원되지 않는 그래프입니다. ")
         return None
     
     st.pyplot(fig)
@@ -364,34 +364,48 @@ def 선택해서_그래프_그리기(df, graph_type, binwidth = None):
 
 
 @st.cache_data
-def 선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type, binwidth = None):
+def 선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type, option = None, rot_angle = 0):
     col = df.columns[0]
     fig, ax = plt.subplots()
     
     if graph_type == '막대그래프':
-        sns.countplot(x=df.columns[0], data=df, ax=ax, palette=pal)
+        option = None
+        sns.countplot(data=df, x = x_var, hue = y_var, ax=ax, palette=pal)
     elif graph_type == '꺾은선그래프':
         # 이변량에서....
-        temp = df[col].value_counts()
-        plt.plot(temp.sort_index().index, temp.sort_index().values, marker='o', linestyle='-', color='black')
-        if binwidth == None:
-            plt.ylim(0, temp.sort_index().max() * 1.2)
+        plt.plot(df[x_var], df[y_var], marker='o', linestyle='-', color='black')
+        if option == None:
+            plt.ylim(0, df[y_var].max() * 1.2)
         else:
-            plt.ylim(temp.sort_index().min * 0.8, temp.sort_index().max() * 1.2)  
+            plt.ylim(df[y_var].min() * 0.8, df[y_var].max()*1.2)
     elif graph_type == '히스토그램':
-        sns.histplot(data = df, x = col, ax = ax, color=pal[0], binwidth = binwidth)    
+        if option:
+            sns.histplot(data = df, x = x_var, hue = y_var, element = "step", binwidth = option)
+        else:
+            sns.histplot(data = df, x = x_var, hue = y_var)
+
+    elif graph_type == '도수분포다각형':
+        if option:
+            sns.histplot(data = df, x = x_var, hue = y_var, element = "poly", binwidth = option)
+        else:
+            sns.histplot(data = df, x = x_var, hue = y_var)
+
     elif graph_type == '상자그림':
-        sns.boxplot(data = df, x = col, color=pal[0], showmeans=True,
+        # 완료
+        sns.boxplot(data = df, x = x_var, y = y_var, showmeans=True,
                     meanprops={'marker':'o',
                        'markerfacecolor':'white', 
                        'markeredgecolor':'black',
                        'markersize':'8'})
     elif graph_type =="산점도":
-        st.write("산점도")
+        sns.scatterplot(data = df, x = x_var, y = y_var, hue = option , alpha = 0.6, edgecolor = None)
     else:
-        st.error("Unsupported graph type.")
+        st.error("지원되지 않는 그래프입니다. ")
         return None
-    
+    # ax.legend( loc='upper center',  ncol=1, frameon=True)
+
+    # xticks option
+    plt.xticks(rotation = 0)
     st.pyplot(fig)
     return fig
 
