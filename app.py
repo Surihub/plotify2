@@ -9,8 +9,6 @@ import koreanize_matplotlib
 import deepl
 from stemgraphic import stem_graphic
 
-
-
 # CSS를 사용하여 Streamlit 앱의 왼쪽 및 오른쪽 패딩 제거
 css_style = """
     <style>
