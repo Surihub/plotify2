@@ -7,10 +7,32 @@ import numpy as np
 import matplotlib.pyplot as plt
 import koreanize_matplotlib
 import deepl
+from stemgraphic import stem_graphic
 
 
-st.header("🌲Wep app for EDA")
-st.success("🎈EDA(Exploratory Data Analysis, 탐색적 데이터 분석)이란 간단한 그래프로 데이터의 특징과 패턴을 찾아내어 데이터를 탐구하기 위한 과정입니다. 왼쪽의 사이드바에서 데이터를 선택하거나 업로드하고, 순서에 따라 탐색을 진행해보세요. **단, 입력하는 데이터는 원자료(raw data)의 형태**여야 합니다. \n\n✉ 버그 및 제안사항 등 문의: sbhath17@gmail.com(황수빈), code: [github](https://github.com/Surihub/plot)")
+
+# CSS를 사용하여 Streamlit 앱의 왼쪽 및 오른쪽 패딩 제거
+css_style = """
+    <style>
+        .css-18e3th9 {
+            padding-top: 1rem;
+            padding-right: 1rem;
+            padding-left: 1rem;
+            padding-bottom: 1rem;
+        }
+        .stApp {
+            padding-top: 0px;
+            padding-bottom: 0px;
+            padding-left: 0px;
+            padding-right: 0px;
+        }
+    </style>
+"""
+st.markdown(css_style, unsafe_allow_html=True)
+
+st.header("📌 데이터 과학을 위한 공학도구")
+with st.chat_message(name = "human", avatar="🧑‍💻"):
+    st.write("🎈EDA(Exploratory Data Analysis, 탐색적 데이터 분석)이란 간단한 그래프로 데이터의 특징과 패턴을 찾아내어 데이터를 탐구하기 위한 과정입니다. 왼쪽의 사이드바에서 데이터를 선택하거나 업로드하고, 순서에 따라 탐색을 진행해보세요. **단, 입력하는 데이터는 원자료(raw data)의 형태**여야 합니다. \n\n✉ 버그 및 제안사항 등 문의: sbhath17@gmail.com(황수빈), code: [github](https://github.com/Surihub/plot)")
 
 # 스트림릿 세션 상태 초기화
 if 'df' not in st.session_state:
@@ -43,7 +65,8 @@ with st.sidebar:
         # df = sns.load_dataset(dataset_name)
         df = eda.load_data(dataset_name, uploaded_file)
         if st.checkbox(f'**{mydata}** 조금만 불러오기'):
-            df = df.sample(n=30, random_state=42)
+            if df.shape[0]>30:
+                df = df.sample(n=30, random_state=42)
        
 st.subheader("👀 데이터 확인하기")
 # st.write(df)
@@ -51,7 +74,7 @@ try:
     if df is not None:
         st.session_state['df'] = df
         st.session_state['data_loaded'] = True
-        st.write("데이터 로드 완료! 불러온 데이터셋은 다음과 같습니다. ")
+        st.success('데이터 로드 완료!👍🏻 불러온 데이터셋은 다음과 같습니다.')
         st.write(df.head())
         
 except:
@@ -61,13 +84,17 @@ except:
 if st.session_state['data_loaded']:
     df = st.session_state['df']
     # st.subheader("👈 분석할 열 선택하기")
-    st.success(f"이 데이터는 {df.shape[0]}개의 행(가로줄), {df.shape[1]}개의 열(세로줄)로 이뤄진 데이터네요! ")
+    st.info(f"이 데이터는 {df.shape[0]}개의 행(가로줄), {df.shape[1]}개의 열(세로줄)로 이뤄진 데이터네요! 전체 데이터는 아래를 눌러 확인해보세요. 그래프를 그리기 위해서는 그 아래의 버튼을 클릭해주세요. ")
     with st.expander('전체 데이터 보기'):
         st.write(df)
 
-from stemgraphic import stem_graphic
+    # 데이터 시각화를 위한 '다음 버튼' 생성
+    if st.button('다음 단계로 진행하기', type = 'secondary'):
+        # 버튼이 클릭되면 'show_visualization' 상태를 True로 설정
+        st.session_state['show_visualization'] = True
+
 # 3. 데이터 시각화
-if st.session_state['data_loaded']:
+if st.session_state.get('show_visualization', False):
     tab1, tab2 = st.tabs(["한 개의 시각화", "두 개의 변량 시각화"])
 
     with tab1:
