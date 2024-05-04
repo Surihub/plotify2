@@ -63,8 +63,9 @@ with st.sidebar:
         # df = sns.load_dataset(dataset_name)
         df = eda.load_data(dataset_name, uploaded_file)
         if st.checkbox(f'**{mydata}** 조금만 불러오기'):
-            if df.shape[0]>30:
-                df = df.sample(n=30, random_state=42)
+            n_sample = st.number_input(f"이 데이터는 총 {df.shape[0]}행이네요. 임의로 추출할 표본 개수를 입력해주세요.", value = 30, step=1)
+            if df.shape[0]>n_sample:
+                df = df.sample(n=n_sample, random_state=42)
        
 st.subheader("👀 데이터 확인하기")
 # st.write(df)
