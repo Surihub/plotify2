@@ -50,6 +50,7 @@ if 'transformations' not in st.session_state:
 if 'viz' not in st.session_state:
     st.session_state['viz'] = {} 
 
+st.sidebar.write("# 🎁 데이터 선택하기")
 dataset_name = st.sidebar.selectbox("분석하고 싶은 데이터를 선택해주세요!",
     sns.get_dataset_names(), index = 16, help = "처음이시라면, 귀여운 펭귄들의 데이터인 'penguins'를 추천드려요😀")
 with st.sidebar:
