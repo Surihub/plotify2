@@ -340,6 +340,8 @@ def 선택해서_그래프_그리기(df, graph_type, binwidth = None, rot_angle 
             plt.ylim(temp.sort_index().min * 0.8, temp.sort_index().max() * 1.2)  
     elif graph_type == '히스토그램':
         sns.histplot(data = df, x = col, ax = ax, color=pal[0], binwidth = binwidth)    
+    elif graph_type == '도수분포다각형':
+        sns.histplot(data = df, x = col, ax = ax, element = "poly", color=pal[0], binwidth = binwidth)    
     elif graph_type == '줄기와잎그림':
         try:
             # 숫자형 데이터가 아닐 경우 오류가 발생할 수 있음
@@ -357,8 +359,8 @@ def 선택해서_그래프_그리기(df, graph_type, binwidth = None, rot_angle 
     else:
         st.error("지원되지 않는 그래프입니다. ")
         return None
-    plt.xticks(rotation = rot_angle)
-    st.pyplot(fig)
+    # plt.xticks(rotation = rot_angle)
+    # st.pyplot(fig)
     return fig
 
 
@@ -393,6 +395,7 @@ def 선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type, opt
     elif graph_type == '상자그림':
         # 완료
         sns.boxplot(data = df, x = x_var, y = y_var, showmeans=True,
+                    color = pal[0],
                     meanprops={'marker':'o',
                        'markerfacecolor':'white', 
                        'markeredgecolor':'black',
@@ -404,8 +407,8 @@ def 선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type, opt
         return None
     # ax.legend( loc='upper center',  ncol=1, frameon=True)
 
-    # xticks option
-    plt.xticks(rotation = rot_angle)
-    st.pyplot(fig)
+    # # xticks option
+    # plt.xticks(rotation = rot_angle)
+    # st.pyplot(fig)
     return fig
 

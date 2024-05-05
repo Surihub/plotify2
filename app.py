@@ -88,7 +88,7 @@ if st.session_state['data_loaded']:
         st.write(df)
 
     # 데이터 시각화를 위한 '다음 버튼' 생성
-    if st.button('다음 단계로 진행하기', type = 'secondary'):
+    if st.button('시각화를 통해 데이터 탐색하기', type = 'primary', use_container_width = True):
         # 버튼이 클릭되면 'show_visualization' 상태를 True로 설정
         st.session_state['show_visualization'] = True
 
@@ -101,44 +101,71 @@ if st.session_state.get('show_visualization', False):
         st.success("위에서 나타낸 패턴을 바탕으로, 한 열만을 골라 다양하게 시각화해보면서 추가적으로 탐색해봅시다. ")
         colu1, colu2 = st.columns(2)
         with colu1:
-            selected_columns = st.radio('분석하고자 하는 열을 선택하세요:', st.session_state['df'].columns.tolist())
+            selected_columns = st.selectbox('분석하고자 하는 열을 선택하세요:', st.session_state['df'].columns.tolist())
         with colu2:
-            graph_type = st.radio("그래프 종류를 선택해주세요. ", ["막대그래프", "원그래프", "띠그래프", "꺾은선그래프", "줄기와잎그림", "히스토그램", "상자그림"])
+            graph_type = st.selectbox("그래프 종류를 선택해주세요. ", ["막대그래프", "원그래프", "띠그래프", "꺾은선그래프", "줄기와잎그림", "히스토그램", "도수분포다각형", "상자그림"])
         
 
         st.session_state['selected_columns'] = selected_columns
-        if st.button('열 선택 완료!'):
-            st.session_state['columns_selected'] = True
-            st.success("열 선택 완료!")
+        # if st.button('열 선택 완료!'):
+        #     st.session_state['columns_selected'] = True
+        #     st.success("열 선택 완료!")        
+
+        # 그래프 옵션 ########
+        st.write("----")
+        graph_option_1, graph_1 = st.columns([1/3, 2/3])
+        with graph_option_1:
+            st.subheader("⚙️그래프 옵션")
+            graph_title_1 = st.text_input("그래프 제목을 입력해주세요.")
+            
+        with graph_1:
+            st.subheader("📊그래프 보기")
+        ########
+
+
             
         df1 = df[st.session_state['selected_columns']]
 
-        if graph_type =="히스토그램":
+        if graph_type in ["히스토그램", "도수분포다각형"]:
             if pd.api.types.is_float_dtype(df1):
                 wid = (df1.max()-df1.min())/10
             else:
                 wid = 100
-            binwidth = st.number_input("변량의 계급의 크기를 입력해주세요.", value = wid)
+            with graph_option_1:
+
+                binwidth = st.number_input("변량의 계급의 크기를 입력해주세요.", value = wid)
         else:
             binwidth = None
         st.session_state['df1'] = df1
 
-        st.success(graph_type+"를 그린 결과입니다. 저장하려면 버튼을 클릭하세요.")
-        rot_angle = st.number_input("가로축 글씨 회전시키기. ", min_value = 0, max_value = 90, step = 45)
+
+        with graph_option_1:
+            rot_angle = st.number_input("가로축 글씨 회전시키기. ", min_value = 0, max_value = 90, step = 45)
         fig = eda.선택해서_그래프_그리기(pd.DataFrame(df1), graph_type, binwidth, rot_angle = rot_angle)
+
+        with graph_1:
+            plt.title(graph_title_1, fontsize=15)
+            plt.xticks(rotation = rot_angle)
+            st.pyplot(fig)
 
         # 그림으로 저장
         st.session_state['graph_type'] = graph_type
         st.session_state['fig'] = fig
-        fig_path = "fig.png"
-        st.session_state.fig.savefig(fig_path)
+        with graph_option_1:
+            img_type = st.radio("이미지 파일 형식 선택 ",['png', 'svg'])
 
-        with open("fig.png", "rb") as file:
-            btn = st.download_button(
+        fig_path = f"fig.{img_type}"
+        st.session_state.fig.savefig(fig_path)
+        with graph_1:
+            with open(fig_path, "rb") as file:
+                btn = st.download_button(
                     label="그래프 다운로드 받기[일변량]",
                     data=file,
-                    file_name=f"{selected_columns}_{graph_type}.png",
-                    mime="image/png")
+                    type = 'primary', 
+                    use_container_width=True,
+                    file_name=f"{selected_columns}_{graph_type}.{img_type}",
+                    mime=f"image/{'svg+xml' if img_type == 'svg' else img_type}"
+                )
         st.session_state['viz'] = True
         # 띠그래프 비율 표시 추가
         # 평균 추가할지?
@@ -149,23 +176,35 @@ if st.session_state.get('show_visualization', False):
         # try: # 맨 나중에 처리
         x_var_col, y_var_col, select_graph = st.columns(3)
         with x_var_col:
-            x_var = st.radio('가로축 변수를 선택하세요:', st.session_state['df'].columns.tolist())
+            x_var = st.selectbox('가로축 변수를 선택하세요:', st.session_state['df'].columns.tolist())
         with y_var_col:
-            y_var = st.radio('세로축 변수를 선택하세요(그룹):', st.session_state['df'].columns.tolist())
+            y_var = st.selectbox('세로축 변수를 선택하세요(그룹):', st.session_state['df'].columns.tolist())
+        
+        st.session_state['x_var'] = x_var
+        st.session_state['y_var'] = y_var
+
         if x_var and y_var and x_var == y_var:
             st.error("서로 다른 변수를 선택해주세요.")
         elif x_var and y_var:
             df = st.session_state['df']
             with select_graph:
-                graph_type_2 = st.radio("이변량그래프 종류를 선택해주세요.", ["막대그래프", "꺾은선그래프", "히스토그램", "도수분포다각형", "상자그림", "산점도"])
+                graph_type_2 = st.selectbox("이변량그래프 종류를 선택해주세요.", ["막대그래프", "꺾은선그래프", "히스토그램", "도수분포다각형", "상자그림", "산점도"])
 
+            # 그래프 옵션 ########
+            st.write("----")
+            graph_option, graph = st.columns([1/3, 2/3])
+            with graph_option:
+                st.subheader("⚙️그래프 옵션")
+                graph_title_2 = st.text_input("그래프 제목을 입력해주세요.    ")
+            with graph:
+                st.subheader("📊그래프 보기")
+            ########
+                
             if graph_type_2 != None:
-                st.success(graph_type_2+"를 그린 결과입니다. 저장하려면 버튼을 클릭하세요.")
                 if graph_type_2 == "산점도":
-                    scatter_group, scatter_option = st.columns(2)
-                    with scatter_group:
+                    with graph_option:
                         scatter_group_button = st.checkbox("그룹으로 묶기")
-                    with scatter_option:
+                    with graph_option:
                         # hue 구분 옵션
                         if scatter_group_button:
                             option = st.selectbox("구분할 옵션을 선택해주세요.",df.columns.tolist())
@@ -173,42 +212,58 @@ if st.session_state.get('show_visualization', False):
                             option = None
                 elif graph_type_2 =="꺾은선그래프":
                     # 세로축 범위 옵션
-                    if st.checkbox("0부터 표시합니다."):
-                        option = None
-                    else:
-                        option = True
+                    with graph_option:
+                        if st.checkbox("0부터 표시합니다."):
+                            option = None
+                        else:
+                            option = True
 
-                elif graph_type_2 =="히스토그램":
+                elif graph_type_2 in ["히스토그램", "도수분포다각형"]:
                     if pd.api.types.is_float_dtype(df[x_var]):
                         wid = (df[x_var].max()-df[x_var].min())/10
                     else:
                         wid = 100
-                    option = st.number_input("공통된 계급의 크기를 입력해주세요.", value = wid)
+                    with graph_option:
+                        option = st.number_input("공통된 계급의 크기를 입력해주세요.", value = wid)
 
-                elif graph_type_2 =="도수분포다각형":
-                    if pd.api.types.is_float_dtype(df[x_var]):
-                        wid = (df[x_var].max()-df[x_var].min())/10
-                    else:
-                        wid = 100
-                    option = st.number_input("공통된 계급의 크기를 입력해주세요.", value = wid)
+                # elif graph_type_2 =="도수분포다각형":
+                #     if pd.api.types.is_float_dtype(df[x_var]):
+                #         wid = (df[x_var].max()-df[x_var].min())/10
+                #     else:
+                #         wid = 100
+                #     option = st.number_input("공통된 계급의 크기를 입력해주세요.", value = wid)
                 else:
                     option = None
 
-                rot_angle = st.number_input("가로축 글씨 회전시키기", min_value = 0, max_value = 90, step = 45)
+                with graph_option:
+                    rot_angle = st.number_input("가로축 글씨 회전시키기", min_value = 0, max_value = 90, step = 45)
                 fig = eda.선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type_2, option=option, rot_angle = rot_angle)
-
+                with graph:
+                    plt.title(graph_title_2)
+                    plt.xticks(rotation = rot_angle)
+                    st.pyplot(fig)
                 # 그림으로 저장
                 st.session_state['graph_type_2'] = graph_type_2
                 st.session_state['fig'] = fig
-                fig_path = "fig.png"
+
+                with graph_option:
+                    img_type = st.radio("이미지 파일 형식 선택",['png', 'svg'])
+
+                fig_path = f"fig.{img_type}"
                 st.session_state.fig.savefig(fig_path)
 
-                with open("fig.png", "rb") as file:
-                    btn = st.download_button(
+
+                with graph:
+                    with open(fig_path, "rb") as file:
+                        btn = st.download_button(
                             label="그래프 다운로드 받기[이변량]",
                             data=file,
-                            file_name=f"{selected_columns}_{graph_type_2}.png",
-                            mime="image/png")
+                            type = 'primary', 
+                            use_container_width=True,
+                            file_name=f"{x_var}_{y_var}_{graph_type_2}.{img_type}",
+                            mime=f"image/{'svg+xml' if img_type == 'svg' else img_type}"
+                        )
+                
                 st.session_state['viz'] = True
 
         # except Exception as e:
