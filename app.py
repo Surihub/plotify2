@@ -28,9 +28,9 @@ css_style = """
 """
 st.markdown(css_style, unsafe_allow_html=True)
 
-st.header("📌 데이터 과학을 위한 공학도구")
+st.header("📌 데이터 과학을 위한 공학도구", help="🎈EDA(Exploratory Data Analysis, 탐색적 데이터 분석)이란 간단한 그래프로 데이터의 특징과 패턴을 찾아내어 데이터를 탐구하기 위한 과정입니다. 왼쪽의 사이드바에서 데이터를 선택하거나 업로드하고, 순서에 따라 탐색을 진행해보세요. **단, 입력하는 데이터는 원자료(raw data)의 형태**여야 합니다. \n\n✉ 버그 및 제안사항 등 문의: sbhath17@gmail.com(황수빈), code: [github](https://github.com/Surihub/plot)")
 with st.chat_message(name = "human", avatar="🧑‍💻"):
-    st.write("🎈EDA(Exploratory Data Analysis, 탐색적 데이터 분석)이란 간단한 그래프로 데이터의 특징과 패턴을 찾아내어 데이터를 탐구하기 위한 과정입니다. 왼쪽의 사이드바에서 데이터를 선택하거나 업로드하고, 순서에 따라 탐색을 진행해보세요. **단, 입력하는 데이터는 원자료(raw data)의 형태**여야 합니다. \n\n✉ 버그 및 제안사항 등 문의: sbhath17@gmail.com(황수빈), code: [github](https://github.com/Surihub/plot)")
+    st.write("탐색적 데이터 분석을 위한 공학도구에 오신 것을 환영합니다. 왼쪽 사이드바에서 자료를 불러와주세요.")
 
 # 스트림릿 세션 상태 초기화
 if 'df' not in st.session_state:
