@@ -304,9 +304,9 @@ def 선택해서_그래프_그리기(df, graph_type, option = None, rot_angle = 
         order = option[1]
         # sns.countplot(y=df.columns[0], data=df, order = option[1], ax=ax, palette=pal)
         if horizontal : 
-            sns.countplot(y = df.columns[0], data = df, order = order, ax = ax)
+            sns.countplot(y = df.columns[0], data = df, order = order, ax = ax, palette=pal)
         else:
-            sns.countplot(x = df.columns[0], data = df, order = order, ax = ax)
+            sns.countplot(x = df.columns[0], data = df, order = order, ax = ax, palette=pal)
         # if horizontal & (option[1]==True): 
         #     sns.countplot(y=df.columns[0], data=df, order = option[1], ax=ax, palette=pal)
         # elif horizontal & (option[1]==False):   
