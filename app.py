@@ -116,33 +116,37 @@ if st.session_state.get('show_visualization', False):
         st.write("----")
         graph_option_1, graph_1 = st.columns([1/3, 2/3])
         with graph_option_1:
+            option = None  # 옵션 초기화
             st.subheader("⚙️그래프 옵션")
             graph_title_1 = st.text_input("그래프 제목을 입력해주세요.")
             
         with graph_1:
             st.subheader("📊그래프 보기")
         ########
-
-
-            
         df1 = df[st.session_state['selected_columns']]
 
-        if graph_type in ["히스토그램", "도수분포다각형"]:
+        # st.session_state['df1'] = df1
+        ################################################################
+        if graph_type == "막대그래프":
+            with graph_option_1:
+                option = []
+                horizontal = st.checkbox("가로로 그리기")
+                order = st.multiselect("값들을 순서대로 클릭해주세요.", options = df1.unique(), default = df1.unique())
+                option.append(horizontal)
+                option.append(order)
+
+        elif graph_type in ["히스토그램", "도수분포다각형"]:
             if pd.api.types.is_float_dtype(df1):
                 wid = (df1.max()-df1.min())/10
             else:
                 wid = 100
             with graph_option_1:
-
-                binwidth = st.number_input("변량의 계급의 크기를 입력해주세요.", value = wid)
-        else:
-            binwidth = None
-        st.session_state['df1'] = df1
+                option = st.number_input("변량의 계급의 크기를 입력해주세요.", value = wid)
 
 
         with graph_option_1:
             rot_angle = st.number_input("가로축 글씨 회전시키기. ", min_value = 0, max_value = 90, step = 45)
-        fig = eda.선택해서_그래프_그리기(pd.DataFrame(df1), graph_type, binwidth, rot_angle = rot_angle)
+        fig = eda.선택해서_그래프_그리기(pd.DataFrame(df1), graph_type, option = option, rot_angle = rot_angle)
 
         with graph_1:
             plt.title(graph_title_1, fontsize=15)
@@ -176,10 +180,11 @@ if st.session_state.get('show_visualization', False):
         st.success("위에서 나타낸 패턴을 바탕으로, 가로축, 세로축을 선택하여 다양하게 시각화해보면서 추가적으로 탐색해봅시다. ")
         # try: # 맨 나중에 처리
         x_var_col, y_var_col, select_graph = st.columns(3)
+        col_list = st.session_state['df'].columns.tolist()
         with x_var_col:
-            x_var = st.selectbox('가로축 변수를 선택하세요:', st.session_state['df'].columns.tolist())
+            x_var = st.selectbox('가로축 변수를 선택하세요:', col_list)
         with y_var_col:
-            y_var = st.selectbox('세로축 변수를 선택하세요(그룹):', st.session_state['df'].columns.tolist())
+            y_var = st.selectbox('세로축 변수를 선택하세요(그룹):', col_list)
         
         st.session_state['x_var'] = x_var
         st.session_state['y_var'] = y_var
@@ -203,14 +208,24 @@ if st.session_state.get('show_visualization', False):
                 
             if graph_type_2 != None:
                 if graph_type_2 == "산점도":
+                    option = []
                     with graph_option:
                         scatter_group_button = st.checkbox("그룹으로 묶기")
+                        trend_line_button = st.checkbox("추세선 보이기")
                     with graph_option:
                         # hue 구분 옵션
                         if scatter_group_button:
-                            option = st.selectbox("구분할 옵션을 선택해주세요.",df.columns.tolist())
+                            option_1 = st.selectbox("구분할 옵션을 선택해주세요.",df.columns.tolist())
+                            
                         else:
-                            option = None
+                            option_1 = None
+                        if trend_line_button:
+                            option_2 = True
+                        else:
+                            option_2 = False
+                        option.append(option_1)
+                        option.append(option_2)
+                                                
                 elif graph_type_2 =="꺾은선그래프":
                     # 세로축 범위 옵션
                     with graph_option:
@@ -248,7 +263,7 @@ if st.session_state.get('show_visualization', False):
                 st.session_state['fig'] = fig
 
                 with graph_option:
-                    img_type = st.radio("이미지 파일 형식 선택",['png', 'svg'])
+                    img_type = st.radio("이미지 파일 형식 선택",['png', 'svg'], help="그래프의 색, 글씨 크기, 범례 위치 등 세부적인 요소를 수정하려면 svg로 다운받아보세요. 다운받은 이미지를 파워포인트에서 열면 모두 그룹 해제하여 하나하나 수정할 수 있어요.")
 
                 fig_path = f"fig.{img_type}"
                 st.session_state.fig.savefig(fig_path)
@@ -264,6 +279,7 @@ if st.session_state.get('show_visualization', False):
                             file_name=f"{x_var}_{y_var}_{graph_type_2}.{img_type}",
                             mime=f"image/{'svg+xml' if img_type == 'svg' else img_type}"
                         )
+                    
                 
                 st.session_state['viz'] = True
 

@@ -17,7 +17,11 @@ import numpy as np
 def load_data(dataset_name, uploaded_file):
     if uploaded_file:
         if uploaded_file.name.endswith('.csv'):
-            df = pd.read_csv(uploaded_file, encoding = 'utf-8')
+            try:
+                df = pd.read_csv(uploaded_file, encoding='utf-8', index_col=0)
+            except UnicodeDecodeError:
+                st.error("해당 파일을 불러올 수 없습니다. UTF-8로 변환해주세요.")
+                return None
         else:
             st.warning("csv 파일만 업로드 가능합니다. ")
         return df
@@ -291,12 +295,28 @@ def 하나씩_그래프_그리기(df, width, height):
         st.pyplot(fig)
 
 @st.cache_data
-def 선택해서_그래프_그리기(df, graph_type, binwidth = None, rot_angle = 0):
+def 선택해서_그래프_그리기(df, graph_type, option = None, rot_angle = 0):
     col = df.columns[0]
     fig, ax = plt.subplots()
     
     if graph_type == '막대그래프':
-        sns.countplot(x=df.columns[0], data=df, ax=ax, palette=pal)
+        horizontal = option[0]
+        order = option[1]
+        # sns.countplot(y=df.columns[0], data=df, order = option[1], ax=ax, palette=pal)
+        if horizontal : 
+            sns.countplot(y = df.columns[0], data = df, order = order, ax = ax)
+        else:
+            sns.countplot(x = df.columns[0], data = df, order = order, ax = ax)
+        # if horizontal & (option[1]==True): 
+        #     sns.countplot(y=df.columns[0], data=df, order = option[1], ax=ax, palette=pal)
+        # elif horizontal & (option[1]==False):   
+        #     sns.countplot(y=df.columns[0], data=df, order = option[1], ax=ax, palette=pal)
+        # elif (option[0]==False) & len(option[1]):   
+        #     sns.countplot(x=df.columns[0], data=df, order = option[1], ax=ax, palette=pal)
+        # else:
+        #     sns.countplot(x=df.columns[0], data=df, order = option[1], ax=ax, palette=pal)
+
+
     elif graph_type == '원그래프':
         ax.pie(df[col].value_counts(), labels=df[col].value_counts().index, autopct='%1.1f%%', startangle=90,  colors=pal)
     elif graph_type == '띠그래프':
@@ -334,14 +354,14 @@ def 선택해서_그래프_그리기(df, graph_type, binwidth = None, rot_angle 
         # 이변량에서....
         temp = df[col].value_counts()
         plt.plot(temp.sort_index().index, temp.sort_index().values, marker='o', linestyle='-', color='black')
-        if binwidth == None:
+        if option == None:
             plt.ylim(0, temp.sort_index().max() * 1.2)
         else:
             plt.ylim(temp.sort_index().min * 0.8, temp.sort_index().max() * 1.2)  
     elif graph_type == '히스토그램':
-        sns.histplot(data = df, x = col, ax = ax, color=pal[0], binwidth = binwidth)    
+        sns.histplot(data = df, x = col, ax = ax, color=pal[0], binwidth = option)    
     elif graph_type == '도수분포다각형':
-        sns.histplot(data = df, x = col, ax = ax, element = "poly", color=pal[0], binwidth = binwidth)    
+        sns.histplot(data = df, x = col, ax = ax, element = "poly", color=pal[0], binwidth = option)    
     elif graph_type == '줄기와잎그림':
         try:
             # 숫자형 데이터가 아닐 경우 오류가 발생할 수 있음
@@ -371,8 +391,13 @@ def 선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type, opt
     fig, ax = plt.subplots()
     
     if graph_type == '막대그래프':
-        option = None
-        sns.countplot(data=df, x = x_var, hue = y_var, ax=ax, palette=pal)
+        if option != None: 
+            st.write(option)
+            st.write('hhhh')
+            sns.histplot(data=df, x = x_var, hue = y_var, order=option,  ax=ax, palette=pal)
+        else:
+            sns.countplot(data=df, x = x_var, hue = y_var, ax=ax, palette=pal)
+
     elif graph_type == '꺾은선그래프':
         # 이변량에서....
         plt.plot(df[x_var], df[y_var], marker='o', linestyle='-', color='black')
@@ -400,15 +425,20 @@ def 선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type, opt
                        'markerfacecolor':'white', 
                        'markeredgecolor':'black',
                        'markersize':'8'})
+        
     elif graph_type =="산점도":
-        sns.scatterplot(data = df, x = x_var, y = y_var, hue = option , alpha = 0.6, edgecolor = None)
+        if (option[0] is None) & (option[1]==True): # hue 없이 회귀선 추가
+            # 회귀선 추가
+            sns.regplot(data = df, x = x_var, y = y_var)
+        elif (option[0] is not None) & (option[1]==True): # hue 있고 회귀선 추가
+            fig = sns.lmplot(data = df, x = x_var, y = y_var, hue = option[0])
+        elif (option[0] is None) & (option[1]==False): # hue 없고 회귀선 없고 ok
+            sns.scatterplot(data = df, x = x_var, y = y_var,  alpha = 0.6, edgecolor = None)
+        else:# hue 있고 회귀선 없고 ok
+            sns.scatterplot(data = df, x = x_var, y = y_var, hue = option[0] , alpha = 0.6, edgecolor = None)
     else:
         st.error("지원되지 않는 그래프입니다. ")
         return None
-    # ax.legend( loc='upper center',  ncol=1, frameon=True)
-
-    # # xticks option
-    # plt.xticks(rotation = rot_angle)
-    # st.pyplot(fig)
+    
     return fig
 
