@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import seaborn as sns
 import utils as eda  # eda 모듈 임포트
+import utils_table as tabl  # eda 모듈 임포트
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
@@ -174,6 +175,17 @@ if st.session_state.get('show_visualization', False):
         st.session_state['viz'] = True
         # 띠그래프 비율 표시 추가
         # 평균 추가할지?
+        st.write("-----")
+        st.subheader("🎶데이터 요약하기")
+        summary, table = st.columns(2)
+        with summary:
+            st.write("평균: ", )
+            st.write("중앙값: ", )
+            st.write("최빈값: ", )
+            st.write("분산: ", )
+            st.write("표준편차: ", )
+        with table:
+            st.write('요약 표')
 
     with tab2:
         st.subheader("📈 두 개의 변량 데이터 시각화")
