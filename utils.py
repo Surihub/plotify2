@@ -372,20 +372,12 @@ def 선택해서_그래프_그리기(df, graph_type, option = None, rot_angle = 
     
     if graph_type == '막대그래프':
         horizontal = option[0]
-        order = option[1]
+        # order = option[1]
         # sns.countplot(y=df.columns[0], data=df, order = option[1], ax=ax, palette=pal)
         if horizontal : 
-            sns.countplot(y = df.columns[0], data = df, order = order, ax = ax, palette=pal)
+            sns.countplot(y = df.columns[0], data = df, ax = ax, palette=pal) # order = order, 
         else:
-            sns.countplot(x = df.columns[0], data = df, order = order, ax = ax, palette=pal)
-        # if horizontal & (option[1]==True): 
-        #     sns.countplot(y=df.columns[0], data=df, order = option[1], ax=ax, palette=pal)
-        # elif horizontal & (option[1]==False):   
-        #     sns.countplot(y=df.columns[0], data=df, order = option[1], ax=ax, palette=pal)
-        # elif (option[0]==False) & len(option[1]):   
-        #     sns.countplot(x=df.columns[0], data=df, order = option[1], ax=ax, palette=pal)
-        # else:
-        #     sns.countplot(x=df.columns[0], data=df, order = option[1], ax=ax, palette=pal)
+            sns.countplot(x = df.columns[0], data = df, ax = ax, palette=pal) # order = order, 
 
 
     elif graph_type == '원그래프':
@@ -430,28 +422,38 @@ def 선택해서_그래프_그리기(df, graph_type, option = None, rot_angle = 
         else:
             plt.ylim(temp.sort_index().min * 0.8, temp.sort_index().max() * 1.2)  
     elif graph_type == '히스토그램':
-        sns.histplot(data = df, x = col, ax = ax, color=pal[0], binwidth = option)    
+        if pd.api.types.is_numeric_dtype(df):
+            sns.histplot(data = df, x = col, ax = ax, color=pal[0], binwidth = option)    
+        else:
+            st.error(f"오류: '{col}' 에 대해 히스토그림을 그릴 수 없어요. ")
     elif graph_type == '도수분포다각형':
-        sns.histplot(data = df, x = col, ax = ax, element = "poly", color=pal[0], binwidth = option)    
+        if pd.api.types.is_numeric_dtype(df):
+            sns.histplot(data = df, x = col, ax = ax, element = "poly", color=pal[0], binwidth = option)    
+        else:
+            st.error(f"오류: '{col}' 에 대해 히스토그림을 그릴 수 없어요. ")
+
+
     elif graph_type == '줄기와잎그림':
         try:
             # 숫자형 데이터가 아닐 경우 오류가 발생할 수 있음
             stem_graphic(df[col], ax=ax)
         except TypeError:
-            print(f"오류: '{col}' 열은 숫자형 데이터가 아니어서 줄기와 잎 그림을 그릴 수 없습니다.")
+            st.error(f"오류: '{col}'에 대해 줄기와 잎 그림을 그릴 수 없어요.")
         except Exception as e:
-            print(f"알 수 없는 오류가 발생했습니다: {e}")
+            st.write(f"알 수 없는 오류가 발생했습니다: {e}")
     elif graph_type == '상자그림':
-        sns.boxplot(data = df, x = col, color=pal[0], showmeans=True,
+        if pd.api.types.is_numeric_dtype(df):
+            sns.boxplot(data = df, x = col, color=pal[0], showmeans=True,
                     meanprops={'marker':'o',
                        'markerfacecolor':'white', 
                        'markeredgecolor':'black',
-                       'markersize':'8'})
+                       'markersize':'8'})    
+        else:
+            st.error(f"오류: '{col}' 에 대해 히스토그림을 그릴 수 없어요. ")
+            
     else:
         st.error("지원되지 않는 그래프입니다. ")
         return None
-    # plt.xticks(rotation = rot_angle)
-    # st.pyplot(fig)
     return fig
 
 

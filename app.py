@@ -132,9 +132,11 @@ if st.session_state.get('show_visualization', False):
                 with st.expander("범주 순서 지정하려면 클릭하세요"):
                     option = []
                     horizontal = st.checkbox("가로로 그리기")
-                    order = st.multiselect("값들을 순서대로 클릭해주세요.", options = df1.unique(), default = df1.unique())
                     option.append(horizontal)
-                    option.append(order)
+
+                    ## 값 순서대로 클릭하기 일단 없애기
+                    # order = st.multiselect("값들을 순서대로 클릭해주세요.", options = df1.unique(), default = df1.unique())
+                    # option.append(order)
 
         elif graph_type in ["히스토그램", "도수분포다각형"]:
             if pd.api.types.is_float_dtype(df1):
@@ -198,34 +200,6 @@ if st.session_state.get('show_visualization', False):
                 st.write(" ")
 
 
-
-
-            #     if not clean_data.empty:
-            #         # 도수분포 계산
-            #         bin_edges = np.histogram_bin_edges(clean_data, bins=option)  # 자동으로 bins 계산
-            #         counts, _ = np.histogram(clean_data, bins=bin_edges)
-                    
-            #         # 도수분포표를 DataFrame으로 변환
-            #         frequency_table = pd.DataFrame({
-            #             '구간': [f"{bin_edges[i]} - {bin_edges[i+1]}" for i in range(len(bin_edges)-1)],
-            #             '도수': counts
-            #         })
-                    
-            #         st.write('도수분포표', frequency_table)
-            #     else:
-            #         st.error("모든 데이터가 NaN이어서 도수분포표를 생성할 수 없습니다.")
-            # else:
-            #     # 범주형 데이터 - 빈도표 생성
-            #     # 빈도 계산
-            #     frequency_count = df1.value_counts()
-                
-            #     # 빈도표를 DataFrame으로 변환
-            #     frequency_table = pd.DataFrame({
-            #         '범주': frequency_count.index,
-            #         '빈도': frequency_count.values
-            #     })
-                
-            #     st.write('빈도표', frequency_table)
 
 
     with tab2:
@@ -340,3 +314,31 @@ if st.session_state.get('show_visualization', False):
         #     translator = deepl.Translator(st.secrets['deepl']['key'])
         #     error_message = translator.translate_text(f"{e}", target_lang="KO")
         #     st.error(f"그래프를 그릴 수 없습니다.  \n오류메시지{e}\n\n오류메시지(kor){error_message}")
+
+        st.write("-----")
+        x_var = st.session_state['x_var']
+        y_var = st.session_state['y_var']
+        st.subheader("🖋️ 데이터 요약하기")
+        summary_2, table_2 = st.columns(2)
+  
+
+        x_is_numeric = pd.api.types.is_numeric_dtype(df[x_var])
+        y_is_numeric = pd.api.types.is_numeric_dtype(df[y_var])
+
+        # 수치형 여부에 따라 메시지 출력
+        if x_is_numeric and y_is_numeric:
+            st.write(f"{x_var} * {y_var}: 수치 * 수치")
+        elif not x_is_numeric and y_is_numeric:
+            st.write(f"{x_var} * {y_var}: 비수치 * 수치")
+        elif x_is_numeric and not y_is_numeric:
+            st.write(f"{x_var} * {y_var}: 수치 * 비수치")
+ㅌ            summary_stats = df.groupby(y_var)[x_var].agg(['mean', 'median', 'std']).reset_index()
+            summary_stats.columns("평균", "중앙값", '표준편차')
+            st.write(summary_stats)
+        elif not x_is_numeric and not y_is_numeric:
+            st.write(f"{x_var} * {y_var}: 비수치 * 비수치")
+            with summary_2:
+                st.write("빈도표")
+                st.write(pd.crosstab(index=df[x_var], columns=df[y_var], margins=True, margins_name="Total"))
+            with table_2:
+                st.write("table1")
