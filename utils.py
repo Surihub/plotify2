@@ -56,8 +56,79 @@ def load_data(dataset_name, uploaded_file):
 def summarize(df):
     # 기초 통계량 요약 함수
     summ = df.describe()
-    summ.index = ['개수', '평균', '표준편차', '최솟값', '제1사분위수', '중앙값', '제3사분위수', '최댓값']
+    summ = np.round(summ, 2)
+
+    summ.loc['분산'] = np.round(df.var(), 2)
+    modes = df.mode().dropna()  # 최빈값을 계산하고 결측값 제거
+    mode_str = ', '.join(modes.astype(str))  # 모든 최빈값을 문자열로 변환하고 쉼표로 연결
+    summ.loc['최빈값'] = mode_str  # 문자열로 변환된 최빈값을 할당
+    summ.index = ['개수', '평균', '표준편차', '최솟값', '제1사분위수', '중앙값', '제3사분위수', '최댓값', '분산', '최빈값']
     return summ
+
+
+@st.cache_data
+def summarize_cat(df):
+    # 범주형 데이터 요약 함수 : 
+    frequency = df.value_counts()
+    mode_value = df.mode()[0]
+    mode_freq = frequency.loc[mode_value]
+    summary = pd.DataFrame({
+        '빈도': frequency,
+        '비율': np.round(frequency / len(df), 2)
+    })
+
+    return summary
+
+@st.cache_data
+def table_num(df, bin_width):
+    """
+    수치형 데이터의 도수분포표를 생성합니다.
+
+    Parameters:
+    - df (pd.Series): 도수분포를 계산할 수치형 데이터
+    - bin_width (int or float): 각 구간의 너비
+
+    Returns:
+    - pd.DataFrame: 구간과 해당 구간의 도수를 포함하는 데이터 프레임
+    """
+    # 데이터의 최소값과 최대값을 기준으로 구간 경계를 설정
+    min_val = df.min()
+    max_val = df.max()
+    bins = np.arange(min_val, max_val + bin_width, bin_width)
+    
+    # numpy의 histogram 함수를 사용하여 도수와 구간 경계 계산
+    hist, bin_edges = np.histogram(df, bins=bins)
+
+    # 도수분포표를 DataFrame으로 변환
+    dosu_table = pd.DataFrame({
+        '구간': [f"{bin_edges[i]} - {bin_edges[i+1]}" for i in range(len(bin_edges)-1)],
+        '도수': hist
+    })
+
+    return dosu_table
+
+@st.cache_data
+def table_cat(df):
+
+    # 빈도 계산
+    frequency = df.value_counts()
+    modes = df.mode()  # 모든 최빈값
+
+    # 빈도표 생성
+    summary = pd.DataFrame({
+        '빈도': frequency,
+        '비율': np.round(frequency / len(df), 2)
+    })
+
+    # 최빈값 출력
+    mode_text = ""
+    for mode in modes:
+        mode_text = mode_text+mode
+        mode_text = mode_text+", "
+    st.write("**최빈값**:", len(modes), "개", mode_text[:-2])
+    return summary
+
+
 
 @st.cache_data
 def convert_column_types(df, user_column_types):

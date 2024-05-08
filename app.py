@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import seaborn as sns
 import utils as eda  # eda 모듈 임포트
-import utils_table as tabl  # eda 모듈 임포트
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
@@ -130,11 +129,12 @@ if st.session_state.get('show_visualization', False):
         ################################################################
         if graph_type == "막대그래프":
             with graph_option_1:
-                option = []
-                horizontal = st.checkbox("가로로 그리기")
-                order = st.multiselect("값들을 순서대로 클릭해주세요.", options = df1.unique(), default = df1.unique())
-                option.append(horizontal)
-                option.append(order)
+                with st.expander("범주 순서 지정하려면 클릭하세요"):
+                    option = []
+                    horizontal = st.checkbox("가로로 그리기")
+                    order = st.multiselect("값들을 순서대로 클릭해주세요.", options = df1.unique(), default = df1.unique())
+                    option.append(horizontal)
+                    option.append(order)
 
         elif graph_type in ["히스토그램", "도수분포다각형"]:
             if pd.api.types.is_float_dtype(df1):
@@ -176,16 +176,57 @@ if st.session_state.get('show_visualization', False):
         # 띠그래프 비율 표시 추가
         # 평균 추가할지?
         st.write("-----")
-        st.subheader("🎶데이터 요약하기")
+        st.subheader("🖋️ 데이터 요약하기")
         summary, table = st.columns(2)
+
+        # 선택된 데이터 열을 이용하기
         with summary:
-            st.write("평균: ", )
-            st.write("중앙값: ", )
-            st.write("최빈값: ", )
-            st.write("분산: ", )
-            st.write("표준편차: ", )
+            if pd.api.types.is_numeric_dtype(df1):
+                summ = eda.summarize(df1)
+                st.write(summ)
+            else:
+                summ_cat = eda.table_cat(df1)
+                st.write(summ_cat)
+        # 요약 표 표시
         with table:
-            st.write('요약 표')
+            if pd.api.types.is_numeric_dtype(df1):
+                if graph_type in ["히스토그램", "도수분포다각형"]:
+                    st.write(eda.table_num(df1, option))
+                else:
+                    st.error("그래프 종류를 히스토그램 혹은 도수분포다각형으로 변경해주세요.")
+            else:
+                st.write(" ")
+
+
+
+
+            #     if not clean_data.empty:
+            #         # 도수분포 계산
+            #         bin_edges = np.histogram_bin_edges(clean_data, bins=option)  # 자동으로 bins 계산
+            #         counts, _ = np.histogram(clean_data, bins=bin_edges)
+                    
+            #         # 도수분포표를 DataFrame으로 변환
+            #         frequency_table = pd.DataFrame({
+            #             '구간': [f"{bin_edges[i]} - {bin_edges[i+1]}" for i in range(len(bin_edges)-1)],
+            #             '도수': counts
+            #         })
+                    
+            #         st.write('도수분포표', frequency_table)
+            #     else:
+            #         st.error("모든 데이터가 NaN이어서 도수분포표를 생성할 수 없습니다.")
+            # else:
+            #     # 범주형 데이터 - 빈도표 생성
+            #     # 빈도 계산
+            #     frequency_count = df1.value_counts()
+                
+            #     # 빈도표를 DataFrame으로 변환
+            #     frequency_table = pd.DataFrame({
+            #         '범주': frequency_count.index,
+            #         '빈도': frequency_count.values
+            #     })
+                
+            #     st.write('빈도표', frequency_table)
+
 
     with tab2:
         st.subheader("📈 두 개의 변량 데이터 시각화")
