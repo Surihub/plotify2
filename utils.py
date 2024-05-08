@@ -473,11 +473,15 @@ def 선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type, opt
 
     elif graph_type == '꺾은선그래프':
         # 이변량에서....
-        plt.plot(df[x_var], df[y_var], marker='o', linestyle='-', color='black')
-        if option == None:
-            plt.ylim(0, df[y_var].max() * 1.2)
+        if pd.api.types.is_numeric_dtype(df[x_var]) and pd.api.types.is_numeric_dtype(df[y_var]):
+
+            plt.plot(df[x_var], df[y_var], marker='o', linestyle='-', color='black')
+            if option == None:
+                plt.ylim(0, df[y_var].max() * 1.2)
+            else:
+                plt.ylim(df[y_var].min() * 0.8, df[y_var].max()*1.2)
         else:
-            plt.ylim(df[y_var].min() * 0.8, df[y_var].max()*1.2)
+            st.error("꺾은선그래프를 그릴 수 없어요. ")
     elif graph_type == '히스토그램':
         if option:
             sns.histplot(data = df, x = x_var, hue = y_var, element = "step", binwidth = option)

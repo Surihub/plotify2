@@ -237,19 +237,29 @@ if st.session_state.get('show_visualization', False):
                 if graph_type_2 == "산점도":
                     option = []
                     with graph_option:
-                        scatter_group_button = st.checkbox("그룹으로 묶기")
+                        scatter_group_color = st.checkbox("색으로 구분하기")# 범주
+                        scatter_group_shape = st.checkbox("모양으로 구분하기")# 범주
+                        scatter_group_size = st.checkbox("크기로 구분하기")# 수치
                         trend_line_button = st.checkbox("추세선 보이기")
                     with graph_option:
                         # hue 구분 옵션
-                        if scatter_group_button:
+
+                        if scatter_group_color:
                             option_1 = st.selectbox("구분할 옵션을 선택해주세요.",df.columns.tolist())
-                            
                         else:
                             option_1 = None
-                        if trend_line_button:
-                            option_2 = True
+                        if scatter_group_shape:
+                            option_2 = st.selectbox("모양으로 구분할 옵션을 선택해주세요.",df.columns.tolist())
                         else:
-                            option_2 = False
+                            option_2 = None                            
+                        if scatter_group_size:
+                            option_3 = st.selectbox("크기 기준을 선택해주세요.",df.columns.tolist())
+                        else:
+                            option_3 = None
+                        if trend_line_button:
+                            option_1 = True
+                        else:
+                            option_1 = False
                         option.append(option_1)
                         option.append(option_2)
                                                 
@@ -269,12 +279,6 @@ if st.session_state.get('show_visualization', False):
                     with graph_option:
                         option = st.number_input("공통된 계급의 크기를 입력해주세요.", value = wid)
 
-                # elif graph_type_2 =="도수분포다각형":
-                #     if pd.api.types.is_float_dtype(df[x_var]):
-                #         wid = (df[x_var].max()-df[x_var].min())/10
-                #     else:
-                #         wid = 100
-                #     option = st.number_input("공통된 계급의 크기를 입력해주세요.", value = wid)
                 else:
                     option = None
 
@@ -319,7 +323,6 @@ if st.session_state.get('show_visualization', False):
         x_var = st.session_state['x_var']
         y_var = st.session_state['y_var']
         st.subheader("🖋️ 데이터 요약하기")
-        summary_2, table_2 = st.columns(2)
   
 
         x_is_numeric = pd.api.types.is_numeric_dtype(df[x_var])
@@ -327,18 +330,22 @@ if st.session_state.get('show_visualization', False):
 
         # 수치형 여부에 따라 메시지 출력
         if x_is_numeric and y_is_numeric:
-            st.write(f"{x_var} * {y_var}: 수치 * 수치")
+            # 피어슨 상관계수 계산
+            correlation = df[[x_var, y_var]].corr(method='pearson').iloc[0, 1]
+            st.write(f"피어슨 상관계수 ({x_var} & {y_var}): {correlation:.3f}")
+            
         elif not x_is_numeric and y_is_numeric:
-            st.write(f"{x_var} * {y_var}: 비수치 * 수치")
+            st.write(f"{x_var}의 {y_var}의 통계량")
+            summary_stats = df.groupby(x_var)[y_var].agg(['mean', 'median', 'std']).reset_index()
+            summary_stats.columns = [x_var]+["평균", "중앙값", '표준편차']
+            st.write(summary_stats)
         elif x_is_numeric and not y_is_numeric:
-            st.write(f"{x_var} * {y_var}: 수치 * 비수치")
-ㅌ            summary_stats = df.groupby(y_var)[x_var].agg(['mean', 'median', 'std']).reset_index()
-            summary_stats.columns("평균", "중앙값", '표준편차')
+            st.write(f"{y_var}의 {x_var}의 통계량")
+            summary_stats = df.groupby(y_var)[x_var].agg(['mean', 'median', 'std']).reset_index()
+            summary_stats.columns = [y_var]+["평균", "중앙값", '표준편차']
             st.write(summary_stats)
         elif not x_is_numeric and not y_is_numeric:
             st.write(f"{x_var} * {y_var}: 비수치 * 비수치")
-            with summary_2:
-                st.write("빈도표")
-                st.write(pd.crosstab(index=df[x_var], columns=df[y_var], margins=True, margins_name="Total"))
-            with table_2:
-                st.write("table1")
+            st.write("빈도표")
+            st.write(pd.crosstab(index=df[x_var], columns=df[y_var], margins=True, margins_name="Total"))
+
