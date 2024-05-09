@@ -75,6 +75,10 @@ try:
         st.session_state['df'] = df
         st.session_state['data_loaded'] = True
         st.success('데이터 로드 완료!👍🏻 불러온 데이터셋은 다음과 같습니다.')
+        if dataset_name=="penguins":
+            st.write("펭귄!")
+            with st.expander("펭귄 데이터셋ㅁㄴㅇㄹ에 대한asdf 설명을 보려면 여기를 클릭하세요."):
+                st.write("Wkwis!")
         st.write(df.head())
         
 except:
@@ -232,37 +236,40 @@ if st.session_state.get('show_visualization', False):
             with graph:
                 st.subheader("📊그래프 보기")
             ########
-                
             if graph_type_2 != None:
                 if graph_type_2 == "산점도":
                     option = []
                     with graph_option:
                         scatter_group_color = st.checkbox("색으로 구분하기")# 범주
-                        scatter_group_shape = st.checkbox("모양으로 구분하기")# 범주
-                        scatter_group_size = st.checkbox("크기로 구분하기")# 수치
-                        trend_line_button = st.checkbox("추세선 보이기")
-                    with graph_option:
-                        # hue 구분 옵션
-
                         if scatter_group_color:
-                            option_1 = st.selectbox("구분할 옵션을 선택해주세요.",df.columns.tolist())
+                            option_1 = st.selectbox("색으로 구분할 옵션을 선택해주세요.",df.columns.tolist())
                         else:
                             option_1 = None
+
+                        scatter_group_shape = st.checkbox("모양으로 구분하기")# 범주
                         if scatter_group_shape:
                             option_2 = st.selectbox("모양으로 구분할 옵션을 선택해주세요.",df.columns.tolist())
                         else:
                             option_2 = None                            
+
+                        scatter_group_size = st.checkbox("크기로 구분하기")# 수치
                         if scatter_group_size:
                             option_3 = st.selectbox("크기 기준을 선택해주세요.",df.columns.tolist())
                         else:
                             option_3 = None
+
+                        trend_line_button = st.checkbox("추세선 보이기")
+                        # hue 구분 옵션
+
                         if trend_line_button:
-                            option_1 = True
+                            option_4 = True
                         else:
-                            option_1 = False
+                            option_4 = False
                         option.append(option_1)
                         option.append(option_2)
-                                                
+                        option.append(option_3)
+                        option.append(option_4)
+
                 elif graph_type_2 =="꺾은선그래프":
                     # 세로축 범위 옵션
                     with graph_option:
@@ -272,12 +279,16 @@ if st.session_state.get('show_visualization', False):
                             option = True
 
                 elif graph_type_2 in ["히스토그램", "도수분포다각형"]:
-                    if pd.api.types.is_float_dtype(df[x_var]):
+                    if pd.api.types.is_numeric_dtype(df[x_var]):
                         wid = (df[x_var].max()-df[x_var].min())/10
                     else:
                         wid = 100
                     with graph_option:
                         option = st.number_input("공통된 계급의 크기를 입력해주세요.", value = wid)
+
+                elif graph_type_2 == "막대그래프":
+                    with graph_option:
+                        option = st.checkbox("누적막대그래프")
 
                 else:
                     option = None

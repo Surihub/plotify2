@@ -101,7 +101,7 @@ def table_num(df, bin_width):
 
     # 도수분포표를 DataFrame으로 변환
     dosu_table = pd.DataFrame({
-        '구간': [f"{bin_edges[i]} - {bin_edges[i+1]}" for i in range(len(bin_edges)-1)],
+        '구간(이상-이하)': [f"{bin_edges[i]} - {bin_edges[i+1]}" for i in range(len(bin_edges)-1)],
         '도수': hist
     })
 
@@ -422,15 +422,23 @@ def 선택해서_그래프_그리기(df, graph_type, option = None, rot_angle = 
         else:
             plt.ylim(temp.sort_index().min * 0.8, temp.sort_index().max() * 1.2)  
     elif graph_type == '히스토그램':
-        if pd.api.types.is_numeric_dtype(df):
-            sns.histplot(data = df, x = col, ax = ax, color=pal[0], binwidth = option)    
+        if pd.api.types.is_numeric_dtype(df[col]):
+            if df[col].max() - df[col].min() < option:
+                st.error(f"오류: 계급의 크기를 확인해주세요.")
+            else:
+                sns.histplot(data = df, x = col, ax = ax, color=pal[0], binwidth = option)        
         else:
             st.error(f"오류: '{col}' 에 대해 히스토그림을 그릴 수 없어요. ")
     elif graph_type == '도수분포다각형':
-        if pd.api.types.is_numeric_dtype(df):
-            sns.histplot(data = df, x = col, ax = ax, element = "poly", color=pal[0], binwidth = option)    
+        if pd.api.types.is_numeric_dtype(df[col]):
+            if df[col].max() - df[col].min() < option:
+                st.error(f"오류: 계급의 크기를 확인해주세요.")
+            else:
+                sns.histplot(data = df, x = col, ax = ax, element = "poly", color=pal[0], binwidth = option)    
         else:
-            st.error(f"오류: '{col}' 에 대해 히스토그림을 그릴 수 없어요. ")
+            st.write(np.array(df[col]).dtype)
+            st.error(f"오류: '{col}' 에 대해 도수분포다각형을 그릴 수 없어요. ")
+
 
 
     elif graph_type == '줄기와잎그림':
@@ -464,10 +472,14 @@ def 선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type, opt
     fig, ax = plt.subplots()
     
     if graph_type == '막대그래프':
-        if option != None: 
-            st.write(option)
-            st.write('hhhh')
-            sns.histplot(data=df, x = x_var, hue = y_var, order=option,  ax=ax, palette=pal)
+        # # 순서 지정은 나중에
+        # if option != None: 
+        #     st.write(option)
+        #     st.write('hhhh')
+        #     sns.histplot(data=df, x = x_var, hue = y_var, order=option,  ax=ax, palette=pal)
+        if option == True: 
+            # sns.histplot(data=df, x=x_var, hue=y_var, multiple="stack", shrink=0.8, palette=pal, stat="count")
+            sns.histplot(data=df, x=x_var, hue=y_var, multiple="stack", shrink=0.8, palette=pal, edgecolor = None,  stat="percent")
         else:
             sns.countplot(data=df, x = x_var, hue = y_var, ax=ax, palette=pal)
 
@@ -504,15 +516,42 @@ def 선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type, opt
                        'markersize':'8'})
         
     elif graph_type =="산점도":
-        if (option[0] is None) & (option[1]==True): # hue 없이 회귀선 추가
+        if (option[0] is not None) & (option[3]==True): # hue 있고 회귀선 추가
             # 회귀선 추가
-            sns.regplot(data = df, x = x_var, y = y_var)
-        elif (option[0] is not None) & (option[1]==True): # hue 있고 회귀선 추가
-            fig = sns.lmplot(data = df, x = x_var, y = y_var, hue = option[0])
-        elif (option[0] is None) & (option[1]==False): # hue 없고 회귀선 없고 ok
-            sns.scatterplot(data = df, x = x_var, y = y_var,  alpha = 0.6, edgecolor = None)
-        else:# hue 있고 회귀선 없고 ok
-            sns.scatterplot(data = df, x = x_var, y = y_var, hue = option[0] , alpha = 0.6, edgecolor = None)
+            sns.scatterplot(data=df, x=x_var, y=y_var, hue=option[0], style=option[1], size=option[2])
+
+            # 회귀선 추가
+            # 회귀선은 group별로 다르게 그리기 위해 반복문 사용
+            for name, group in df.groupby(option[0]):
+                sns.regplot(data=group, x=x_var, y=y_var, scatter=False, label=f'Regression {name}', ci=None)
+
+            # sns.regplot(data = df, x = x_var, y = y_var, style = option[1], size = option[2])
+
+        elif (option[0] is None) and (option[3] == True):  # hue 없고 회귀선 추가
+            # 산점도 그리기
+            sns.scatterplot(data=df, x=x_var, y=y_var, style=option[1], size=option[2])
+
+            # 전체 데이터에 대한 회귀선 추가
+            sns.regplot(data=df, x=x_var, y=y_var, scatter=False, label='Total Regression', ci=None)
+
+            # # 회귀선은 group별로 다르게 그리기 위해 반복문 사용
+            # for name, group in df.groupby(option[0]):
+            #     sns.regplot(data=group, x=x_var, y=y_var, scatter=False, label=f'Regression {name}', ci=None)
+            # # sns.regplot(data=df, x=x_var, y=y_var, style=option[1],  scatter_kws={"alpha": 0.6, "edgecolor": "none"}, ci=None)
+            
+        elif (option[0] is None) and (option[3] == False):  # hue 없고 회귀선 없고
+            sns.scatterplot(data=df, x=x_var, y=y_var, style=option[1], size=option[2], alpha=0.6, edgecolor='none')
+            
+        elif (option[0] is not None) and (option[3] == False):  # hue 있고 회귀선 없고
+            sns.scatterplot(data=df, x=x_var, y=y_var, hue=option[0], style=option[1], size=option[2], alpha=0.6, edgecolor='none')
+
+        # plt.legend()
+        # elif (option[0] is not None) & (option[3]==True): # hue 있고 회귀선 추가
+        #     fig = sns.lmplot(data = df, x = x_var, y = y_var, hue = option[0])
+        # elif (option[0] is None) & (option[3]==False): # hue 없고 회귀선 없고 ok
+        #     sns.scatterplot(data = df, x = x_var, y = y_var,  alpha = 0.6, edgecolor = None)
+        # else:# hue 있고 회귀선 없고 ok
+        #     sns.scatterplot(data = df, x = x_var, y = y_var, hue = option[0] , alpha = 0.6, edgecolor = None)
     else:
         st.error("지원되지 않는 그래프입니다. ")
         return None
