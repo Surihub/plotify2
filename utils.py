@@ -15,6 +15,7 @@ import numpy as np
 #     df = sns.load_dataset(dataset_name)
 #     return df
 def load_data(dataset_name, uploaded_file):
+    # 직접 업로드하는 경우
     if uploaded_file:
         if uploaded_file.name.endswith('.csv'):
             try:
@@ -25,12 +26,21 @@ def load_data(dataset_name, uploaded_file):
         else:
             st.warning("csv 파일만 업로드 가능합니다. ")
         return df
+    # 시본 데이터 사용하는 경우
     elif dataset_name:
-        try:
-            df = sns.load_dataset(dataset_name)
-            return df
-        except ValueError:
-            st.error("⚠ 데이터셋 이름을 다시 확인해주세요!")
+        # try:
+        #     df = sns.load_dataset(dataset_name)
+        #     return df
+        # except ValueError:
+        #     st.error("⚠ 데이터셋 이름을 다시 확인해주세요!")
+    # 깃허브 주소에서 가져오는 경우
+    # elif data_ready:
+        df = pd.read_csv(f"https://raw.githubusercontent.com/Surihub/stat_edu/main/data/{dataset_name}.csv", index_col=0)
+        # try:
+        # df = sns.load_dataset(dataset_name)
+        return df
+        # except ValueError:
+        #     st.error("⚠ 데이터셋 이름을 다시 확인해주세요!")
 
 # @st.cache_data
 # def select_columns(df):
@@ -126,6 +136,8 @@ def table_cat(df):
         mode_text = mode_text+mode
         mode_text = mode_text+", "
     st.write("**최빈값**:", len(modes), "개", mode_text[:-2])
+    st.error("평균을 구할 수 없습니다. ")
+    st.error("중앙값을 구할 수 없습니다. ")
     return summary
 
 

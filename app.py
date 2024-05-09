@@ -52,14 +52,20 @@ if 'viz' not in st.session_state:
 
 st.sidebar.write("# 🎁 데이터 선택하기")
 dataset_name = st.sidebar.selectbox("분석하고 싶은 데이터를 선택해주세요!",
-    sns.get_dataset_names(), index = 16, help = "처음이시라면, 귀여운 펭귄들의 데이터인 'penguins'를 추천드려요😀")
+    # sns.get_dataset_names(),
+    # index = 16, 
+    ['penguins_kor', 'tips_kor', 'healthcare_kor', 'world_happiness_report_2021'],
+    help = "처음이시라면, 귀여운 펭귄들의 데이터인 'penguins_kor'를 추천드려요😀")
+
 with st.sidebar:
     uploaded_file = st.file_uploader("혹은, 파일을 업로드해주세요!", type=["csv"], help = 'csv파일만 업로드됩니다😥')
+
 with st.sidebar:
     if uploaded_file is not None:
         mydata = "업로드한 데이터"
     else:
         mydata = dataset_name
+
     if st.checkbox(f'**{mydata}** 불러오기'):
         # df = sns.load_dataset(dataset_name)
         df = eda.load_data(dataset_name, uploaded_file)
@@ -76,7 +82,6 @@ try:
         st.session_state['data_loaded'] = True
         st.success('데이터 로드 완료!👍🏻 불러온 데이터셋은 다음과 같습니다.')
         if dataset_name=="penguins":
-            st.write("펭귄!")
             with st.expander("펭귄 데이터셋ㅁㄴㅇㄹ에 대한asdf 설명을 보려면 여기를 클릭하세요."):
                 st.write("Wkwis!")
         st.write(df.head())
@@ -346,17 +351,17 @@ if st.session_state.get('show_visualization', False):
             st.write(f"피어슨 상관계수 ({x_var} & {y_var}): {correlation:.3f}")
             
         elif not x_is_numeric and y_is_numeric:
-            st.write(f"{x_var}의 {y_var}의 통계량")
+            st.write(f"{x_var} & {y_var}의 통계량")
             summary_stats = df.groupby(x_var)[y_var].agg(['mean', 'median', 'std']).reset_index()
             summary_stats.columns = [x_var]+["평균", "중앙값", '표준편차']
             st.write(summary_stats)
         elif x_is_numeric and not y_is_numeric:
-            st.write(f"{y_var}의 {x_var}의 통계량")
+            st.write(f"{y_var} & {x_var}의 통계량")
             summary_stats = df.groupby(y_var)[x_var].agg(['mean', 'median', 'std']).reset_index()
             summary_stats.columns = [y_var]+["평균", "중앙값", '표준편차']
             st.write(summary_stats)
         elif not x_is_numeric and not y_is_numeric:
-            st.write(f"{x_var} * {y_var}: 비수치 * 비수치")
+            st.write(f"{x_var} & {y_var}")
             st.write("빈도표")
             st.write(pd.crosstab(index=df[x_var], columns=df[y_var], margins=True, margins_name="Total"))
 
