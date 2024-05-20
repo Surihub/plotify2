@@ -53,7 +53,7 @@ if 'viz' not in st.session_state:
 st.sidebar.write("# 🎁 데이터 선택하기")
 with st.sidebar:
     dataset_name = st.sidebar.selectbox("분석하고 싶은 데이터를 선택해주세요!",
-    ['penguins', 'tips', 'titanic'],
+    ['penguins', 'tips', 'titanic', 'iris', 'attention', 'exercise', 'flight'],
     help = "처음이시라면, 귀여운 펭귄들의 데이터인 'penguins'를 추천드려요😀")
 data_ready = st.sidebar.selectbox("github 데이터 선택", ['준비 중 '])#['Pockemon_new_re', 'tips_kor', 'healthcare_kor', 'world_happiness_report_2021'])
 
