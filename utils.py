@@ -14,7 +14,7 @@ import numpy as np
 # def load_data(dataset_name):
 #     df = sns.load_dataset(dataset_name)
 #     return df
-def load_data(dataset_name, uploaded_file):
+def load_data(dataset_name, uploaded_file, data_ready):
     # 직접 업로드하는 경우
     if uploaded_file:
         if uploaded_file.name.endswith('.csv'):
@@ -28,17 +28,17 @@ def load_data(dataset_name, uploaded_file):
         return df
     # 시본 데이터 사용하는 경우
     elif dataset_name:
-        # try:
-        #     df = sns.load_dataset(dataset_name)
-        #     return df
-        # except ValueError:
-        #     st.error("⚠ 데이터셋 이름을 다시 확인해주세요!")
+        try:
+            df = sns.load_dataset(dataset_name)
+            return df
+        except ValueError:
+            st.error("⚠ 데이터셋 이름을 다시 확인해주세요!")
     # 깃허브 주소에서 가져오는 경우
-    # elif data_ready:
+    elif data_ready:
         df = pd.read_csv(f"https://raw.githubusercontent.com/Surihub/stat_edu/main/data/{dataset_name}.csv", index_col=0)
+        return df
         # try:
         # df = sns.load_dataset(dataset_name)
-        return df
         # except ValueError:
         #     st.error("⚠ 데이터셋 이름을 다시 확인해주세요!")
 
@@ -462,14 +462,17 @@ def 선택해서_그래프_그리기(df, graph_type, option = None, rot_angle = 
         except Exception as e:
             st.write(f"알 수 없는 오류가 발생했습니다: {e}")
     elif graph_type == '상자그림':
-        if pd.api.types.is_numeric_dtype(df):
+        # st.write(df.dtypes) 임시로 처리함
+        if pd.api.types.is_categorical_dtype(df[col]):
+            pass
+        else:
             sns.boxplot(data = df, x = col, color=pal[0], showmeans=True,
                     meanprops={'marker':'o',
                        'markerfacecolor':'white', 
                        'markeredgecolor':'black',
                        'markersize':'8'})    
-        else:
-            st.error(f"오류: '{col}' 에 대해 히스토그림을 그릴 수 없어요. ")
+        # else:
+        #     st.error(f"오류: '{col}' 에 대해 상자그림을 그릴 수 없어요. ")
             
     else:
         st.error("지원되지 않는 그래프입니다. ")
@@ -526,47 +529,24 @@ def 선택해서_그래프_그리기_이변량(df, x_var, y_var, graph_type, opt
                        'markerfacecolor':'white', 
                        'markeredgecolor':'black',
                        'markersize':'8'})
-        
     elif graph_type =="산점도":
-        if (option[0] is not None) & (option[3]==True): # hue 있고 회귀선 추가
-            # 회귀선 추가
-            sns.scatterplot(data=df, x=x_var, y=y_var, hue=option[0], style=option[1], size=option[2])
+        sns.scatterplot(data=df, x=x_var, y=y_var, hue=option[0], style=option[1], size=option[2])
 
-            # 회귀선 추가
-            # 회귀선은 group별로 다르게 그리기 위해 반복문 사용
-            for name, group in df.groupby(option[0]):
-                sns.regplot(data=group, x=x_var, y=y_var, scatter=False, label=f'Regression {name}', ci=None)
+        if option[3]:  # 회귀선 추가
+            if option[0] is not None:  # hue가 있을 때
+                # 각 범주별로 회귀선을 다른 색으로 그리기
+                unique_categories = df[option[0]].unique()
+                palette = sns.color_palette("hsv", len(unique_categories))
+                category_color_dict = dict(zip(unique_categories, palette))
 
-            # sns.regplot(data = df, x = x_var, y = y_var, style = option[1], size = option[2])
+                for category in unique_categories:
+                    category_data = df[df[option[0]] == category]
+                    sns.regplot(data=category_data, x=x_var, y=y_var, scatter=False, color=category_color_dict[category], label=f'Regression {category}', ci=None)
+            else:  # hue 없을 때
+                sns.regplot(data=df, x=x_var, y=y_var, scatter=False, label='Total Regression', ci=None)
 
-        elif (option[0] is None) and (option[3] == True):  # hue 없고 회귀선 추가
-            # 산점도 그리기
-            sns.scatterplot(data=df, x=x_var, y=y_var, style=option[1], size=option[2])
-
-            # 전체 데이터에 대한 회귀선 추가
-            sns.regplot(data=df, x=x_var, y=y_var, scatter=False, label='Total Regression', ci=None)
-
-            # # 회귀선은 group별로 다르게 그리기 위해 반복문 사용
-            # for name, group in df.groupby(option[0]):
-            #     sns.regplot(data=group, x=x_var, y=y_var, scatter=False, label=f'Regression {name}', ci=None)
-            # # sns.regplot(data=df, x=x_var, y=y_var, style=option[1],  scatter_kws={"alpha": 0.6, "edgecolor": "none"}, ci=None)
-            
-        elif (option[0] is None) and (option[3] == False):  # hue 없고 회귀선 없고
-            sns.scatterplot(data=df, x=x_var, y=y_var, style=option[1], size=option[2], alpha=0.6, edgecolor='none')
-            
-        elif (option[0] is not None) and (option[3] == False):  # hue 있고 회귀선 없고
-            sns.scatterplot(data=df, x=x_var, y=y_var, hue=option[0], style=option[1], size=option[2], alpha=0.6, edgecolor='none')
-
-        # plt.legend()
-        # elif (option[0] is not None) & (option[3]==True): # hue 있고 회귀선 추가
-        #     fig = sns.lmplot(data = df, x = x_var, y = y_var, hue = option[0])
-        # elif (option[0] is None) & (option[3]==False): # hue 없고 회귀선 없고 ok
-        #     sns.scatterplot(data = df, x = x_var, y = y_var,  alpha = 0.6, edgecolor = None)
-        # else:# hue 있고 회귀선 없고 ok
-        #     sns.scatterplot(data = df, x = x_var, y = y_var, hue = option[0] , alpha = 0.6, edgecolor = None)
     else:
         st.error("지원되지 않는 그래프입니다. ")
         return None
-    
     return fig
 
