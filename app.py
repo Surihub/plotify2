@@ -9,24 +9,24 @@ import koreanize_matplotlib
 import deepl
 from stemgraphic import stem_graphic
 
-# CSS를 사용하여 Streamlit 앱의 왼쪽 및 오른쪽 패딩 제거
-css_style = """
-    <style>
-        .css-18e3th9 {
-            padding-top: 1rem;
-            padding-right: 1rem;
-            padding-left: 1rem;
-            padding-bottom: 1rem;
-        }
-        .stApp {
-            padding-top: 0px;
-            padding-bottom: 0px;
-            padding-left: 0px;
-            padding-right: 0px;
-        }
-    </style>
-"""
-st.markdown(css_style, unsafe_allow_html=True)
+# # CSS를 사용하여 Streamlit 앱의 왼쪽 및 오른쪽 패딩 제거
+# css_style = """
+#     <style>
+#         .css-18e3th9 {
+#             padding-top: 1rem;
+#             padding-right: 1rem;
+#             padding-left: 1rem;
+#             padding-bottom: 1rem;
+#         }
+#         .stApp {
+#             padding-top: 0px;
+#             padding-bottom: 0px;
+#             padding-left: 0px;
+#             padding-right: 0px;
+#         }
+#     </style>
+# """
+# st.markdown(css_style, unsafe_allow_html=True)
 
 st.header("📌 데이터 과학을 위한 공학도구", help="🎈EDA(Exploratory Data Analysis, 탐색적 데이터 분석)이란 간단한 그래프로 데이터의 특징과 패턴을 찾아내어 데이터를 탐구하기 위한 과정입니다. 왼쪽의 사이드바에서 데이터를 선택하거나 업로드하고, 순서에 따라 탐색을 진행해보세요. **단, 입력하는 데이터는 원자료(raw data)의 형태**여야 합니다. \n\n✉ 버그 및 제안사항 등 문의: sbhath17@gmail.com(황수빈), code: [github](https://github.com/Surihub/plot)")
 with st.chat_message(name = "human", avatar="🧑‍💻"):
@@ -51,11 +51,11 @@ if 'viz' not in st.session_state:
     st.session_state['viz'] = {} 
 
 st.sidebar.write("# 🎁 데이터 선택하기")
-dataset_name = st.sidebar.selectbox("분석하고 싶은 데이터를 선택해주세요!",
-    # sns.get_dataset_names(),
-    # index = 16, 
-    ['penguins_kor', 'tips_kor', 'healthcare_kor', 'world_happiness_report_2021'],
-    help = "처음이시라면, 귀여운 펭귄들의 데이터인 'penguins_kor'를 추천드려요😀")
+with st.sidebar:
+    dataset_name = st.sidebar.selectbox("분석하고 싶은 데이터를 선택해주세요!",
+    ['penguins', 'tips', 'titanic'],
+    help = "처음이시라면, 귀여운 펭귄들의 데이터인 'penguins'를 추천드려요😀")
+data_ready = st.sidebar.selectbox("github 데이터 선택", ['준비 중 '])#['Pockemon_new_re', 'tips_kor', 'healthcare_kor', 'world_happiness_report_2021'])
 
 with st.sidebar:
     uploaded_file = st.file_uploader("혹은, 파일을 업로드해주세요!", type=["csv"], help = 'csv파일만 업로드됩니다😥')
@@ -63,17 +63,18 @@ with st.sidebar:
 with st.sidebar:
     if uploaded_file is not None:
         mydata = "업로드한 데이터"
+    # elif data_ready:
+    #     mydata = data_ready
     else:
         mydata = dataset_name
 
     if st.checkbox(f'**{mydata}** 불러오기'):
-        # df = sns.load_dataset(dataset_name)
-        df = eda.load_data(dataset_name, uploaded_file)
+        df = eda.load_data(dataset_name, uploaded_file, data_ready)
         if st.checkbox(f'**{mydata}** 조금만 불러오기'):
             n_sample = st.number_input(f"이 데이터는 총 {df.shape[0]}행이네요. 임의로 추출할 표본 개수를 입력해주세요.", value = 30, step=1)
             if df.shape[0]>n_sample:
                 df = df.sample(n=n_sample, random_state=42)
-       
+                
 st.subheader("👀 데이터 확인하기")
 # st.write(df)
 try:
@@ -81,9 +82,6 @@ try:
         st.session_state['df'] = df
         st.session_state['data_loaded'] = True
         st.success('데이터 로드 완료!👍🏻 불러온 데이터셋은 다음과 같습니다.')
-        if dataset_name=="penguins":
-            with st.expander("펭귄 데이터셋ㅁㄴㅇㄹ에 대한asdf 설명을 보려면 여기를 클릭하세요."):
-                st.write("Wkwis!")
         st.write(df.head())
         
 except:
@@ -247,19 +245,19 @@ if st.session_state.get('show_visualization', False):
                     with graph_option:
                         scatter_group_color = st.checkbox("색으로 구분하기")# 범주
                         if scatter_group_color:
-                            option_1 = st.selectbox("색으로 구분할 옵션을 선택해주세요.",df.columns.tolist())
+                            option_1 = st.selectbox("색으로 구분할 옵션을 선택해주세요.", df.columns.tolist())
                         else:
                             option_1 = None
 
                         scatter_group_shape = st.checkbox("모양으로 구분하기")# 범주
                         if scatter_group_shape:
-                            option_2 = st.selectbox("모양으로 구분할 옵션을 선택해주세요.",df.columns.tolist())
+                            option_2 = st.selectbox("모양으로 구분할 옵션을 선택해주세요.", df.columns.tolist())
                         else:
                             option_2 = None                            
 
                         scatter_group_size = st.checkbox("크기로 구분하기")# 수치
                         if scatter_group_size:
-                            option_3 = st.selectbox("크기 기준을 선택해주세요.",df.columns.tolist())
+                            option_3 = st.selectbox("크기 기준을 선택해주세요.", df.columns.tolist())
                         else:
                             option_3 = None
 
